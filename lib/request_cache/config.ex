@@ -1,4 +1,6 @@
 defmodule RequestCache.Config do
+  @moduledoc false
+
   @app :request_cache
 
   def graphql_paths do

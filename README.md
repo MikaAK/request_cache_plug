@@ -36,13 +36,13 @@ This plug is intended to be inserted into the `endpoint.ex` fairly early in the 
 it should go after telemetry but before our parsers
 
 ```elixir
- plug Plug.Telemetry, event_prefix: [:phoenix, :endpoint]
+plug Plug.Telemetry, event_prefix: [:phoenix, :endpoint]
 
-  plug RequestCache.Plug
+plug RequestCache.Plug
 
-  plug Plug.Parsers,
-    parsers: [:urlencoded, :multipart, :json],
-    pass: ["*/*"]
+plug Plug.Parsers,
+  parsers: [:urlencoded, :multipart, :json],
+  pass: ["*/*"]
 ```
 
 After that we can utilize our cache in a few ways
@@ -120,3 +120,5 @@ end
 
 ### Notes/Gotchas
 - In order for this caching to work, we cannot be using POST requests as specced out by GraphQL, not for queries at least, fortunately this doesn't actually matter since we can use any http method we want (there will be a limit to query size), in a production app you may be doing this already due to the caching you gain from CloudFlare
+- Absinthe and ConCache are optional dependencies, if you don't have them you won't have access to `RequestCache.Middleware` or `RequestCache.ConCacheStore`
+- If no ConCache is found, you must set `config :request_cache_module` to something else

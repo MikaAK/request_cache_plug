@@ -1,4 +1,4 @@
-if Enum.any?(Application.loaded_applications(), fn {dep_name, _, _} -> dep_name === :absinthe end) do
+if RequestCache.Application.dependency_found?(:absinthe) do
   defmodule RequestCache.Middleware do
     @behaviour Absinthe.Middleware
 

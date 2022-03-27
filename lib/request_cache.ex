@@ -7,7 +7,7 @@ defmodule RequestCache do
     RequestCache.Plug.store_request(conn, opts_or_ttl)
   end
 
-  if Enum.any?(Application.loaded_applications(), fn {dep_name, _, _} -> dep_name === :absinthe end) do
+  if RequestCache.Application.dependency_found?(:absinthe) do
     def store(%Absinthe.Resolution{} = conn, opts_or_ttl) do
       RequestCache.Middleware.store_resolution(conn, opts_or_ttl)
     end

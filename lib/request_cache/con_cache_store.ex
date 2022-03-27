@@ -1,6 +1,8 @@
 cond do
-  Enum.any?(Application.loaded_applications(), fn {dep_name, _, _} -> dep_name === :con_cache end) ->
+  RequestCache.Application.dependency_found?(:con_cache) ->
     defmodule RequestCache.ConCacheStore do
+      @moduledoc false
+
       def start_link(opts \\ []) do
         opts = Keyword.merge(RequestCache.Config.default_concache_opts(), opts)
 
