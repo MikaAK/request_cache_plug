@@ -1,4 +1,6 @@
 defmodule RequestCache.Plug do
+  require Logger
+
   @moduledoc """
   This plug allows you to cache GraphQL requests based off their query name and
   variables. This should be placed right after telemetry and before parsers so that it can
@@ -9,15 +11,32 @@ defmodule RequestCache.Plug do
 
   @behaviour Plug
 
-  @conn_private_key :__shared_request_cache__
+  # This is compile time so we can check quicker
+  @graphql_paths RequestCache.Config.graphql_paths()
 
   @impl Plug
   def init(opts), do: opts
 
   @impl Plug
-  def call(conn, _) do
+  def call(%Plug.Conn{request_path: path, method: :get} = conn, _) when path not in @graphql_paths do
+    cache_key = rest_cache_key(conn)
+
+    case RequestCache.ConCacheStore.get(cache_key) do
+      {:ok, nil} -> conn |> enable_request_cache_for_conn |> cache_before_send_if_requested(cache_key)
+
+      {:ok, cached_result} -> halt_and_return_result(conn, cached_result)
+
+      {:error, e} ->
+        Logger.error("[RequestCache.Plug] #{e}")
+
+        e
+    end
+  end
+
+  @impl Plug
+  def call(%Plug.Conn{request_path: path, method: :get} = conn, _) when path in @graphql_paths do
     case fetch_query(conn) do
-      nil -> enable_request_cache_for_conn(conn)
+      nil -> conn
       {query_name, variables} ->
         maybe_return_cached_result(conn, query_name, variables)
     end
@@ -26,9 +45,27 @@ defmodule RequestCache.Plug do
   defp maybe_return_cached_result(conn, query_name, variables) do
     cache_key = create_key(query_name, variables)
 
-    case Store.get(cache_key) do
+    case RequestCache.ConCacheStore.get(cache_key) do
       {:ok, nil} -> conn |> enable_request_cache_for_conn |> cache_before_send_if_requested(cache_key)
-      {:ok, cached_result} -> conn |> Plug.Conn.halt |> Plug.Conn.send_resp(200, cached_result)
+      {:ok, cached_result} -> halt_and_return_result(conn, cached_result)
+      {:error, e} ->
+        Logger.error("[RequestCache.Plug] #{e}")
+
+        e
+    end
+  end
+
+  defp halt_and_return_result(conn, result) do
+    conn |> Plug.Conn.halt |> Plug.Conn.send_resp(200, result)
+  end
+
+  defp rest_cache_key(%Plug.Conn{request_path: path} = conn) do
+    case Plug.Conn.fetch_query_params(conn) do
+      %{query_params: query_params} when query_params !== "" ->
+        create_key(path, query_params)
+
+      _ ->
+        create_key(path, %{})
     end
   end
 
@@ -39,7 +76,7 @@ defmodule RequestCache.Plug do
   defp cache_before_send_if_requested(conn, cache_key) do
     Plug.Conn.register_before_send(conn, fn new_conn ->
       if enabled_for_request?(conn) do
-        Store.put(cache_key, request_cache_ttl(conn), conn.resp_body)
+        request_cache_module(conn).put(cache_key, request_cache_ttl(conn), conn.resp_body)
 
         new_conn
       else
@@ -48,12 +85,17 @@ defmodule RequestCache.Plug do
     end)
   end
 
+  defp request_cache_module(conn) do
+    conn.private[conn_private_key()][:request][:cache]
+  end
+
   defp request_cache_ttl(conn) do
-    new_conn.private[@conn_private_key][:request][:ttl]
+    conn.private[conn_private_key()][:request][:ttl]
   end
 
   defp enabled_for_request?(conn) do
-    not is_nil(new_conn.private[@conn_private_key][:request])
+    not is_nil(get_in(conn.private, [conn_private_key(), :request])) or
+    not is_nil(get_in(conn.private, [:absinthe, :context, conn_private_key(), :request]))
   end
 
   defp fetch_query(conn) do
@@ -75,14 +117,44 @@ defmodule RequestCache.Plug do
   end
 
   defp enable_request_cache_for_conn(conn) do
-    Plug.Conn.put_private(conn, @conn_private_key, enabled?: true)
+    Plug.Conn.put_private(conn, conn_private_key(), enabled?: true)
+    Plug.Conn.put_private(conn, :absinthe, [{conn_private_key(), enabled?: true}])
   end
 
-  def store_request(conn, ttl) do
-    if conn.private[@conn_private_key][:enabled?] do
-      Plug.Conn.put_private(conn, @conn_private_key, enabled?: true, request: [ttl: ttl])
+  def store_request(conn, opts) when is_list(opts) do
+    if conn.private[conn_private_key()][:enabled?] do
+      Plug.Conn.put_private(conn, conn_private_key(),
+        enabled?: true,
+        request: merge_default_opts(opts)
+      )
     else
-      raise "RequestCache requestsed but hasn't been enabled, ensure query has a name and the RequestCache.Plug is part of your Endpoint"
+      raise_cache_disabled_exception()
     end
+  end
+
+  def store_request(conn, ttl) when is_integer(ttl) do
+    if conn.private[conn_private_key()][:enabled?] do
+      Plug.Conn.put_private(conn, conn_private_key(),
+        enabled?: true,
+        request: [ttl: ttl, cache: RequestCache.Config.request_cache_module()]
+      )
+    else
+      raise_cache_disabled_exception()
+    end
+  end
+
+  defp raise_cache_disabled_exception do
+    raise "RequestCache requestsed but hasn't been enabled, ensure query has a name and the RequestCache.Plug is part of your Endpoint"
+  end
+
+  defp merge_default_opts(opts) do
+    Keyword.merge([
+      ttl: RequestCache.Config.default_ttl(),
+      cache: RequestCache.Config.request_cache_module()
+    ], opts)
+  end
+
+  defp conn_private_key do
+    RequestCache.Config.conn_private_key()
   end
 end

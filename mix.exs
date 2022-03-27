@@ -23,9 +23,9 @@ defmodule RequestCache.MixProject do
   # Run "mix help deps" to learn about dependencies.
   defp deps do
     [
-      {:nimble_options, "~> 0.4"},
-
       {:absinthe, "~> 1.7", optional: true},
+      {:con_cache, "~> 1.0", optional: true},
+      {:plug, "~> 1.13"},
 
       {:ex_doc, ">= 0.0.0", only: :dev}
     ]
@@ -36,7 +36,7 @@ defmodule RequestCache.MixProject do
       maintainers: ["Mika Kalathil"],
       licenses: ["MIT"],
       links: %{"GitHub" => "https://github.com/mikaak/request_cache_plug"},
-      files: ~w(mix.exs README.md CHANGELOG.md LICENSE lib)
+      files: ~w(mix.exs README.md CHANGELOG.md LICENSE lib config)
     ]
   end
 
