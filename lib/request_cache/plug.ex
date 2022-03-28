@@ -18,7 +18,7 @@ defmodule RequestCache.Plug do
   def init(opts), do: opts
 
   @impl Plug
-  def call(%Plug.Conn{request_path: path, method: :get} = conn, _) when path not in @graphql_paths do
+  def call(%Plug.Conn{request_path: path, method: "GET"} = conn, _) when path not in @graphql_paths do
     cache_key = rest_cache_key(conn)
 
     case RequestCache.ConCacheStore.get(cache_key) do
@@ -34,7 +34,7 @@ defmodule RequestCache.Plug do
   end
 
   @impl Plug
-  def call(%Plug.Conn{request_path: path, method: :get} = conn, _) when path in @graphql_paths do
+  def call(%Plug.Conn{request_path: path, method: "GET"} = conn, _) when path in @graphql_paths do
     case fetch_query(conn) do
       nil -> conn
       {query_name, variables} ->
@@ -42,8 +42,12 @@ defmodule RequestCache.Plug do
     end
   end
 
+  @impl Plug
+  def call(conn, _), do: conn
+
   defp maybe_return_cached_result(conn, query_name, variables) do
     cache_key = create_key(query_name, variables)
+
 
     case RequestCache.ConCacheStore.get(cache_key) do
       {:ok, nil} -> conn |> enable_request_cache_for_conn |> cache_before_send_if_requested(cache_key)
@@ -75,6 +79,8 @@ defmodule RequestCache.Plug do
 
   defp cache_before_send_if_requested(conn, cache_key) do
     Plug.Conn.register_before_send(conn, fn new_conn ->
+      require IEx
+      IEx.pry
       if enabled_for_request?(conn) do
         request_cache_module(conn).put(cache_key, request_cache_ttl(conn), conn.resp_body)
 
@@ -100,25 +106,36 @@ defmodule RequestCache.Plug do
 
   defp fetch_query(conn) do
     case Plug.Conn.fetch_query_params(conn) do
-      %{query_params: %{"query" => query, "variables" => variables}} ->
+      %{query_params: %{"query" => query} = params} ->
         query_name = parse_gql_name(query)
 
-        {query_name, variables}
+        if query_name do
+          {query_name, params["variables"] || %{}}
+        end
 
       _ -> nil
     end
   end
 
   defp parse_gql_name(query_string) do
-    case Regex.run(~r/^(?:query) ([^\(]+(?=\())/, query_string, capture: :all_but_first) do
-      [query_name] -> query_name
+    case Regex.run(~r/^(?:query) ([^\({]+(?=\(|{))/, query_string, capture: :all_but_first) do
+      [query_name] -> String.trim(query_name)
       _ -> nil
     end
   end
 
-  defp enable_request_cache_for_conn(conn) do
-    Plug.Conn.put_private(conn, conn_private_key(), enabled?: true)
-    Plug.Conn.put_private(conn, :absinthe, [{conn_private_key(), enabled?: true}])
+  if RequestCache.Application.dependency_found?(:absinthe_plug) do
+    defp enable_request_cache_for_conn(conn) do
+      context = conn.private[:absinthe][:context] || %{}
+
+      conn
+        |> Plug.Conn.put_private(conn_private_key(), enabled?: true)
+        |> Absinthe.Plug.put_options(context: Map.put(context, conn_private_key(), enabled?: true))
+    end
+  else
+    defp enable_request_cache_for_conn(conn) do
+      Plug.Conn.put_private(conn, conn_private_key(), enabled?: true)
+    end
   end
 
   def store_request(conn, opts) when is_list(opts) do

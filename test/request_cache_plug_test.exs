@@ -1,4 +1,4 @@
-defmodule RequestCacheTest do
+defmodule RequestCachePlugTest do
   use ExUnit.Case, async: true
 
   test "stops any plug from running if cache is found"
@@ -10,4 +10,6 @@ defmodule RequestCacheTest do
   test "throws an error if you try to call &store/2 in an non enabled controller"
 
   test "throws an error if you try to call &store/2 in an non enabled resolver"
+
+  test "allows you to use `cache` key inside opts to override specific cache for a request"
 end

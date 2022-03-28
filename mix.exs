@@ -25,9 +25,11 @@ defmodule RequestCache.MixProject do
   defp deps do
     [
       {:absinthe, "~> 1.7", optional: true},
+      {:absinthe_plug, "~> 1.5", optional: true},
       {:con_cache, "~> 1.0", optional: true},
       {:plug, "~> 1.13"},
 
+      {:jason, "~> 1.0", only: :test},
       {:ex_doc, ">= 0.0.0", only: :dev}
     ]
   end
