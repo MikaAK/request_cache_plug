@@ -110,6 +110,8 @@ end
 You are responsible for starting the cache, including ConCacheStore, so if you're planning to use it make sure
 you add `RequestCache.ConCacheStore` to the application.ex list of children
 
+***Specifying the module per function is currently not fully implemented, check back soon for updates***
+
 We can also override the module for a particular request by passing the option to our graphql middleware or
 our `&RequestCache.store/2` function as `[ttl: 123, cache: MyCacheModule]`
 
