@@ -22,5 +22,9 @@ defmodule RequestCache do
     def store(result, opts) when is_list(opts) do
       {:middleware, RequestCache.ResolverMiddleware, Keyword.put(opts, :value, result)}
     end
+
+    def connect_absinthe_context_to_conn(conn, %Absinthe.Blueprint{} = blueprint) do
+      Absinthe.Plug.put_options(conn, context: blueprint.execution.context)
+    end
   end
 end

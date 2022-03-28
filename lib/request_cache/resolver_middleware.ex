@@ -22,7 +22,7 @@ if RequestCache.Application.dependency_found?(:absinthe) and RequestCache.Applic
             &Keyword.merge(&1, config)
           )
         }
-        IO.inspect(resolution.context, label: "RESOLVER_MIDDLEWARE")
+
         resolution
       else
         raise "RequestCache request enable attempted but hasn't been enabled by the plug, ensure query has a name and the RequestCache.Plug is part of your Endpoint"

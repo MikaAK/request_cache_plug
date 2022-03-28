@@ -79,10 +79,10 @@ defmodule RequestCache.Plug do
 
   defp cache_before_send_if_requested(conn, cache_key) do
     Plug.Conn.register_before_send(conn, fn new_conn ->
-      require IEx
-      IEx.pry
-      if enabled_for_request?(conn) do
-        request_cache_module(conn).put(cache_key, request_cache_ttl(conn), conn.resp_body)
+      if enabled_for_request?(new_conn) do
+        with :ok <- request_cache_module(new_conn).put(cache_key, request_cache_ttl(new_conn), new_conn.resp_body) do
+          Logger.debug("[RequestCache.Plug] Successfuly put #{cache_key} into cache\n#{new_conn.resp_body}")
+        end
 
         new_conn
       else
@@ -92,7 +92,9 @@ defmodule RequestCache.Plug do
   end
 
   defp request_cache_module(conn) do
-    conn.private[conn_private_key()][:request][:cache]
+    path = [conn_private_key(), :request, :cache]
+
+    get_in(conn.private, path) || get_in(conn.private || %{}, [:absinthe, :context | path])
   end
 
   defp request_cache_ttl(conn) do

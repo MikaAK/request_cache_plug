@@ -46,23 +46,29 @@ plug Plug.Parsers,
   pass: ["*/*"]
 ```
 
+We also need to setup a before_send hook to our absinthe_plug (if not using absinthe or you won't be using `&RequestCache.store/2` inside a resolver you can skip this step)
+```elixir
+plug Absinthe.Plug, before_send: {RequestCache, :connect_absinthe_context_to_conn}
+```
+What this does is allow us to see the results of items we put onto our request context from within plugs coming after absinthe
+
 After that we can utilize our cache in a few ways
 
 #### Utilization with Phoenix Controllers
 ```elixir
 def index(conn, params) do
-  RequestCache.store(conn, :timer.seconds(60))
-
-  ...
+  conn
+    |> RequestCache.store(:timer.seconds(60))
+    |> put_status(200)
+    |> json(%{...})
 end
 ```
 
 #### Utilization with Absinthe Resolvers
 ```elixir
-def all(params, resolution) do
-  RequestCache.store(resolution, :timer.seconds(60))
-
-  ...
+def all(params, _resolution) do
+  # Instead of returning {:ok, value} we return this
+  RequestCache.store(value, :timer.seconds(60))
 end
 ```
 
@@ -99,6 +105,8 @@ you add `RequestCache.ConCacheStore` to the application.ex list of children
 We can also override the module for a particular request by passing the option to our graphql middleware or
 our `&RequestCache.store/2` function as `[ttl: 123, cache: MyCacheModule]`
 
+##### With Middleware
+
 ```elixir
 field :user, :user do
   arg :id, non_null(:id)
@@ -109,13 +117,19 @@ field :user, :user do
 end
 ```
 
-or
+##### In a Resolver
 
 ```elixir
 def all(params, resolution) do
-  RequestCache.store(resolution, ttl: :timer.seconds(60), cache: MyCacheModule)
+  RequestCache.store(value, ttl: :timer.seconds(60), cache: MyCacheModule)
+end
+```
 
-  ...
+##### In a Controller
+
+```elixir
+def index(conn, params) do
+  RequestCache.store(conn, ttl: :timer.seconds(60), cache: MyCacheModule)
 end
 ```
 

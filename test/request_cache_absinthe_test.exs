@@ -77,7 +77,10 @@ defmodule RequestCacheAbsintheTest do
 
     forward "/graphql",
       to: Absinthe.Plug,
-      init_opts: [schema: RequestCacheAbsintheTest.Schema]
+      init_opts: [
+        schema: RequestCacheAbsintheTest.Schema,
+        before_send: {RequestCache, :connect_absinthe_context_to_conn}
+      ]
   end
 
   @query "query Hello { hello }"
@@ -96,10 +99,11 @@ defmodule RequestCacheAbsintheTest do
       |> Absinthe.Plug.put_options(context: %{call_pid: pid})
       |> Router.call([])
 
-    assert conn === :get
+    assert conn.resp_body === :get
       |> conn("/graphql?#{URI.encode_query(%{query: @query})}")
       |> Absinthe.Plug.put_options(context: %{call_pid: pid})
       |> Router.call([])
+      |> Map.get(:resp_body)
   end
 
   test "throws an error if router doesn't have RequestCache.Plug", %{call_pid: pid} do
