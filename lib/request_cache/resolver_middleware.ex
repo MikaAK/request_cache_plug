@@ -1,5 +1,7 @@
 if RequestCache.Application.dependency_found?(:absinthe) and RequestCache.Application.dependency_found?(:absinthe_plug) do
   defmodule RequestCache.ResolverMiddleware do
+    alias RequestCache.Util
+
     @behaviour Absinthe.Middleware
 
     @type opts :: [ttl: pos_integer, cache: module, value: any]
@@ -11,7 +13,7 @@ if RequestCache.Application.dependency_found?(:absinthe) and RequestCache.Applic
 
     defp enable_cache_for_resolution(resolution, opts) do
       if resolution.context[RequestCache.Config.conn_private_key()][:enabled?] do
-        config = [request: opts |> merge_default_opts |> Keyword.delete(:value)]
+        config = [request: opts |> Util.merge_default_opts |> Keyword.delete(:value)]
 
         resolution = %{resolution |
           state: :resolved,
@@ -25,16 +27,8 @@ if RequestCache.Application.dependency_found?(:absinthe) and RequestCache.Applic
 
         resolution
       else
-        raise "RequestCache request enable attempted but hasn't been enabled by the plug, ensure query has a name and the RequestCache.Plug is part of your Endpoint"
+        Util.raise_cache_disabled_exception()
       end
-    end
-
-    # TODO: These funcs are WET due to copy from Plug
-    defp merge_default_opts(opts) do
-      Keyword.merge([
-        ttl: RequestCache.Config.default_ttl(),
-        cache: RequestCache.Config.request_cache_module()
-      ], opts)
     end
   end
 end

@@ -1,6 +1,8 @@
 defmodule RequestCache.Plug do
   require Logger
 
+  alias RequestCache.Util
+
   @moduledoc """
   This plug allows you to cache GraphQL requests based off their query name and
   variables. This should be placed right after telemetry and before parsers so that it can
@@ -46,7 +48,7 @@ defmodule RequestCache.Plug do
   def call(conn, _), do: conn
 
   defp maybe_return_cached_result(conn, query_name, variables) do
-    cache_key = create_key(query_name, variables)
+    cache_key = Util.create_key(query_name, variables)
 
 
     case RequestCache.ConCacheStore.get(cache_key) do
@@ -66,15 +68,11 @@ defmodule RequestCache.Plug do
   defp rest_cache_key(%Plug.Conn{request_path: path} = conn) do
     case Plug.Conn.fetch_query_params(conn) do
       %{query_params: query_params} when query_params !== "" ->
-        create_key(path, query_params)
+        Util.create_key(path, query_params)
 
       _ ->
-        create_key(path, %{})
+        Util.create_key(path, %{})
     end
-  end
-
-  defp create_key(query_name, variables) do
-    "#{query_name}:#{:erlang.phash2(variables)}"
   end
 
   defp cache_before_send_if_requested(conn, cache_key) do
@@ -109,19 +107,12 @@ defmodule RequestCache.Plug do
   defp fetch_query(conn) do
     case Plug.Conn.fetch_query_params(conn) do
       %{query_params: %{"query" => query} = params} ->
-        query_name = parse_gql_name(query)
+        query_name = Util.parse_gql_name(query)
 
         if query_name do
           {query_name, params["variables"] || %{}}
         end
 
-      _ -> nil
-    end
-  end
-
-  defp parse_gql_name(query_string) do
-    case Regex.run(~r/^(?:query) ([^\({]+(?=\(|{))/, query_string, capture: :all_but_first) do
-      [query_name] -> String.trim(query_name)
       _ -> nil
     end
   end
@@ -144,10 +135,10 @@ defmodule RequestCache.Plug do
     if conn.private[conn_private_key()][:enabled?] do
       Plug.Conn.put_private(conn, conn_private_key(),
         enabled?: true,
-        request: merge_default_opts(opts)
+        request: Util.merge_default_opts(opts)
       )
     else
-      raise_cache_disabled_exception()
+      Util.raise_cache_disabled_exception()
     end
   end
 
@@ -158,19 +149,8 @@ defmodule RequestCache.Plug do
         request: [ttl: ttl, cache: RequestCache.Config.request_cache_module()]
       )
     else
-      raise_cache_disabled_exception()
+      Util.raise_cache_disabled_exception()
     end
-  end
-
-  defp raise_cache_disabled_exception do
-    raise "RequestCache requestsed but hasn't been enabled, ensure query has a name and the RequestCache.Plug is part of your Endpoint"
-  end
-
-  defp merge_default_opts(opts) do
-    Keyword.merge([
-      ttl: RequestCache.Config.default_ttl(),
-      cache: RequestCache.Config.request_cache_module()
-    ], opts)
   end
 
   defp conn_private_key do
