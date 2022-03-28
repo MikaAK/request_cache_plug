@@ -84,6 +84,7 @@ defmodule RequestCacheAbsintheTest do
   end
 
   @query "query Hello { hello }"
+  @unnamed_query "query { hello }"
 
   setup do
     {:ok, pid} = EnsureCalledOnlyOnce.start_link()
@@ -95,12 +96,12 @@ defmodule RequestCacheAbsintheTest do
     RequestCache.ConCacheStore.start_link()
 
     conn = :get
-      |> conn("/graphql?#{URI.encode_query(%{query: @query})}")
+      |> conn(graphql_url(@query))
       |> Absinthe.Plug.put_options(context: %{call_pid: pid})
       |> Router.call([])
 
     assert conn.resp_body === :get
-      |> conn("/graphql?#{URI.encode_query(%{query: @query})}")
+      |> conn(graphql_url(@query))
       |> Absinthe.Plug.put_options(context: %{call_pid: pid})
       |> Router.call([])
       |> Map.get(:resp_body)
@@ -109,11 +110,30 @@ defmodule RequestCacheAbsintheTest do
   test "throws an error if router doesn't have RequestCache.Plug", %{call_pid: pid} do
     assert_raise Plug.Conn.WrapperError, fn ->
       :get
-        |> conn("/graphql?#{URI.encode_query(%{query: @query})}")
+        |> conn(graphql_url(@query))
         |> Absinthe.Plug.put_options(context: %{call_pid: pid})
         |> RouterWithoutPlug.call([])
     end
   end
 
+  test "unammed queries don't cache but are allowed through", %{call_pid: pid} do
+    :get
+      |> conn(graphql_url(@unnamed_query))
+      |> Absinthe.Plug.put_options(context: %{call_pid: pid})
+      |> Router.call([])
+
+    assert_raise Plug.Conn.WrapperError, fn ->
+      :get
+        |> conn(graphql_url(@unnamed_query))
+        |> Absinthe.Plug.put_options(context: %{call_pid: pid})
+        |> Router.call([])
+        |> Map.get(:resp_body)
+    end
+  end
+
   test "allows you to use `cache` key inside opts to override specific cache for a request"
+
+  defp graphql_url(query) do
+    "/graphql?#{URI.encode_query(%{query: query})}"
+  end
 end

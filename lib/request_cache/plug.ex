@@ -29,14 +29,14 @@ defmodule RequestCache.Plug do
       {:error, e} ->
         Logger.error("[RequestCache.Plug] #{e}")
 
-        e
+        enable_request_cache_for_conn(conn)
     end
   end
 
   @impl Plug
   def call(%Plug.Conn{request_path: path, method: "GET"} = conn, _) when path in @graphql_paths do
     case fetch_query(conn) do
-      nil -> conn
+      nil -> enable_request_cache_for_conn(conn)
       {query_name, variables} ->
         maybe_return_cached_result(conn, query_name, variables)
     end
@@ -55,7 +55,7 @@ defmodule RequestCache.Plug do
       {:error, e} ->
         Logger.error("[RequestCache.Plug] #{e}")
 
-        e
+        enable_request_cache_for_conn(conn)
     end
   end
 
