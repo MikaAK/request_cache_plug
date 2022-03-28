@@ -9,16 +9,16 @@ cond do
         ConCache.start_link(opts)
       end
 
-      def get(key) do
-        ConCache.get(
-          RequestCache.Config.default_concache_opts()[:name],
+      def get(pid \\ nil, key) do
+        {:ok, ConCache.get(
+          pid || RequestCache.Config.default_concache_opts()[:name],
           key
-        )
+        )}
       end
 
-      def put(key, ttl, value) do
+      def put(pid \\ nil, key, ttl, value) do
         ConCache.put(
-          RequestCache.Config.default_concache_opts()[:name],
+          pid || RequestCache.Config.default_concache_opts()[:name],
           key,
           %ConCache.Item{value: value, ttl: ttl}
         )

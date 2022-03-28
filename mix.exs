@@ -17,7 +17,7 @@ defmodule RequestCache.MixProject do
   def application do
     [
       mod: {RequestCache.Application, []},
-      extra_applications: [:logger]
+      extra_applications: (if Mix.env() in [:test, :dev], do: [:con_cache, :logger], else: [:logger])
     ]
   end
 

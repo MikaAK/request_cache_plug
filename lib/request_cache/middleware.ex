@@ -23,7 +23,7 @@ if RequestCache.Application.dependency_found?(:absinthe) do
           context: Map.put(resolution.context, RequestCache.Config.conn_private_key(), config)
         }
       else
-        raise "RequestCache requestsed but hasn't been enabled, ensure query has a name and the RequestCache.Plug is part of your Endpoint"
+        raise "RequestCache request enable attempted but hasn't been enabled by the plug, ensure query has a name and the RequestCache.Plug is part of your Endpoint"
       end
     end
 

@@ -16,7 +16,7 @@ defmodule RequestCache.Config do
   end
 
   def default_ttl do
-    Application.get_env(@app, :default_ttl) || RequestCache.ConCacheStore
+    Application.get_env(@app, :default_ttl) || :timer.hours(1)
   end
 
 
@@ -25,7 +25,8 @@ defmodule RequestCache.Config do
       name: :con_cache_request_cache_store,
       global_ttl: default_ttl(),
       aquire_lock_timeout: :timer.seconds(1),
-      ets_options: [:write_concurrency, :read_concurrency]
+      ttl_check_interval: :timer.seconds(1),
+      ets_options: [write_concurrency: true, read_concurrency: true]
     ]
   end
 end
