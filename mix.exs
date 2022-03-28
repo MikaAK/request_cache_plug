@@ -6,7 +6,9 @@ defmodule RequestCache.MixProject do
       app: :request_cache_plug,
       version: "0.1.0",
       elixir: "~> 1.12",
+      description: "Plug to cache requests declaratively for either GraphQL or Phoenix, this plug is intended to short circuit all json/decoding or parsing a server would normally do",
       start_permanent: Mix.env() == :prod,
+      elixirc_paths: elixirc_paths(Mix.env()),
       deps: deps(),
       docs: docs(),
       package: package()
@@ -33,6 +35,10 @@ defmodule RequestCache.MixProject do
       {:ex_doc, ">= 0.0.0", only: :dev}
     ]
   end
+
+  # Specifies which paths to compile per environment.
+  defp elixirc_paths(:test), do: ["lib", "test/support"]
+  defp elixirc_paths(_), do: ["lib"]
 
   defp package do
     [

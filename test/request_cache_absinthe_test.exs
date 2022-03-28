@@ -2,23 +2,7 @@ defmodule RequestCacheAbsintheTest do
   use ExUnit.Case, async: true
   use Plug.Test
 
-  defmodule EnsureCalledOnlyOnce do
-    use Agent
-
-    def start_link do
-      Agent.start_link(fn ->
-        false
-      end)
-    end
-
-    def call(pid) do
-      if Agent.get(pid, &(&1)) do
-        raise "Cannot be called more than once"
-      else
-        Agent.update(pid, fn _ -> true end)
-      end
-    end
-  end
+  alias RequestCache.Support.EnsureCalledOnlyOnce
 
   defmodule Schema do
     use Absinthe.Schema
@@ -131,7 +115,8 @@ defmodule RequestCacheAbsintheTest do
     end
   end
 
-  test "allows you to use `cache` key inside opts to override specific cache for a request"
+  test "allows you to use `cache` key inside opts to override specific cache for a request" do
+  end
 
   defp graphql_url(query) do
     "/graphql?#{URI.encode_query(%{query: query})}"

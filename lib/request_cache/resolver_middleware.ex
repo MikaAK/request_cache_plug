@@ -1,5 +1,7 @@
 if RequestCache.Application.dependency_found?(:absinthe) and RequestCache.Application.dependency_found?(:absinthe_plug) do
   defmodule RequestCache.ResolverMiddleware do
+    @moduledoc false
+
     alias RequestCache.Util
 
     @behaviour Absinthe.Middleware

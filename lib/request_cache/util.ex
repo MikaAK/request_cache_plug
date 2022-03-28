@@ -1,4 +1,6 @@
 defmodule RequestCache.Util do
+  @moduledoc false
+
   def parse_gql_name(query_string) do
     case Regex.run(~r/^(?:query) ([^\({]+(?=\(|{))/, query_string, capture: :all_but_first) do
       [query_name] -> String.trim(query_name)
