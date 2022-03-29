@@ -34,4 +34,3 @@ if RequestCache.Application.dependency_found?(:absinthe) and RequestCache.Applic
     end
   end
 end
-

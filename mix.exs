@@ -4,7 +4,7 @@ defmodule RequestCache.MixProject do
   def project do
     [
       app: :request_cache_plug,
-      version: "0.1.0",
+      version: "0.1.1",
       elixir: "~> 1.12",
       description: "Plug to cache requests declaratively for either GraphQL or Phoenix, this plug is intended to short circuit all json/decoding or parsing a server would normally do",
       start_permanent: Mix.env() == :prod,
@@ -26,7 +26,7 @@ defmodule RequestCache.MixProject do
   # Run "mix help deps" to learn about dependencies.
   defp deps do
     [
-      {:absinthe, "~> 1.7", optional: true},
+      {:absinthe, "~> 1.4", optional: true},
       {:absinthe_plug, "~> 1.5", optional: true},
       {:con_cache, "~> 1.0", optional: true},
       {:plug, "~> 1.13"},
