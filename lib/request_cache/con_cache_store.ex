@@ -9,6 +9,13 @@ cond do
         ConCache.start_link(opts)
       end
 
+      def child_spec(opts) do
+        %{
+          id: opts[:name] || :con_cache_request_plug_store,
+          start: {RequestCache.ConCacheStore, :start_link, [opts]}
+        }
+      end
+
       def get(pid \\ nil, key) do
         {:ok, ConCache.get(
           pid || RequestCache.Config.default_concache_opts()[:name],
