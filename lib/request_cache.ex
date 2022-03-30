@@ -7,7 +7,11 @@ defmodule RequestCache do
 
   @spec store(conn :: Plug.Conn.t, opts_or_ttl :: opts | pos_integer) :: Plug.Conn.t
   def store(%Plug.Conn{} = conn, opts_or_ttl) do
-    RequestCache.Plug.store_request(conn, opts_or_ttl)
+    if RequestCache.Config.enabled?() do
+      RequestCache.Plug.store_request(conn, opts_or_ttl)
+    else
+      conn
+    end
   end
 
   if RequestCache.Application.dependency_found?(:absinthe) do
@@ -20,7 +24,11 @@ defmodule RequestCache do
     end
 
     def store(result, opts) when is_list(opts) do
-      {:middleware, RequestCache.ResolverMiddleware, Keyword.put(opts, :value, result)}
+      if RequestCache.Config.enabled?() do
+        {:middleware, RequestCache.ResolverMiddleware, Keyword.put(opts, :value, result)}
+      else
+        {:ok, result}
+      end
     end
 
     def connect_absinthe_context_to_conn(conn, %Absinthe.Blueprint{} = blueprint) do
