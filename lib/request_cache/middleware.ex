@@ -22,7 +22,9 @@ if RequestCache.Application.dependency_found?(:absinthe) and RequestCache.Applic
           context: Map.put(resolution.context, RequestCache.Config.conn_private_key(), config)
         }
       else
-        Util.raise_cache_disabled_exception()
+        Util.log_cache_disabled_message()
+
+        resolution
       end
     end
   end

@@ -1,4 +1,6 @@
 defmodule RequestCache.Util do
+  require Logger
+
   @moduledoc false
 
   def parse_gql_name(query_string) do
@@ -19,7 +21,7 @@ defmodule RequestCache.Util do
     "#{query_name}:#{:erlang.phash2(variables)}"
   end
 
-  def raise_cache_disabled_exception do
-    raise "RequestCache requestsed but hasn't been enabled, ensure query has a name and the RequestCache.Plug is part of your Endpoint"
+  def log_cache_disabled_message do
+    Logger.debug("RequestCache requestsed but hasn't been enabled, ensure query has a name and the RequestCache.Plug is part of your Endpoint")
   end
 end

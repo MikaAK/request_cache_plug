@@ -20,7 +20,23 @@ defmodule RequestCache.Plug do
   def init(opts), do: opts
 
   @impl Plug
-  def call(%Plug.Conn{request_path: path, method: "GET"} = conn, _) when path not in @graphql_paths do
+  def call(conn, _) do
+    if RequestCache.Config.enabled?() do
+      call_for_api_type(conn)
+    else
+      conn
+    end
+  end
+
+  defp call_for_api_type(%Plug.Conn{request_path: path, method: "GET"} = conn) when path in @graphql_paths do
+    case fetch_query(conn) do
+      nil -> enable_request_cache_for_conn(conn)
+      {query_name, variables} ->
+        maybe_return_cached_result(conn, query_name, variables)
+    end
+  end
+
+  defp call_for_api_type(%Plug.Conn{request_path: path, method: "GET"} = conn) when path not in @graphql_paths do
     cache_key = rest_cache_key(conn)
 
     case RequestCache.ConCacheStore.get(cache_key) do
@@ -35,17 +51,7 @@ defmodule RequestCache.Plug do
     end
   end
 
-  @impl Plug
-  def call(%Plug.Conn{request_path: path, method: "GET"} = conn, _) when path in @graphql_paths do
-    case fetch_query(conn) do
-      nil -> enable_request_cache_for_conn(conn)
-      {query_name, variables} ->
-        maybe_return_cached_result(conn, query_name, variables)
-    end
-  end
-
-  @impl Plug
-  def call(conn, _), do: conn
+  defp call_for_api_type(conn), do: conn
 
   defp maybe_return_cached_result(conn, query_name, variables) do
     cache_key = Util.create_key(query_name, variables)
@@ -138,7 +144,9 @@ defmodule RequestCache.Plug do
         request: Util.merge_default_opts(opts)
       )
     else
-      Util.raise_cache_disabled_exception()
+      Util.log_cache_disabled_message()
+
+      conn
     end
   end
 
@@ -149,7 +157,9 @@ defmodule RequestCache.Plug do
         request: [ttl: ttl, cache: RequestCache.Config.request_cache_module()]
       )
     else
-      Util.raise_cache_disabled_exception()
+      Util.log_cache_disabled_message()
+
+      conn
     end
   end
 

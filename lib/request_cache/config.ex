@@ -19,6 +19,9 @@ defmodule RequestCache.Config do
     Application.get_env(@app, :default_ttl) || :timer.hours(1)
   end
 
+  def enabled? do
+    Application.get_env(@app, :enabled?) || true
+  end
 
   def default_concache_opts do
     Application.get_env(@app, :default_concache_opts) || [

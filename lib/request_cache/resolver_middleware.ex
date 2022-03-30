@@ -29,7 +29,9 @@ if RequestCache.Application.dependency_found?(:absinthe) and RequestCache.Applic
 
         resolution
       else
-        Util.raise_cache_disabled_exception()
+        Util.log_cache_disabled_message()
+
+        resolution
       end
     end
   end
