@@ -1,3 +1,6 @@
+# 0.1.4
+- add debug log when item returned from cache
+
 # 0.1.3
 - Stop raising exceptions and log messages in debug mode
 - add `enabled?` global config`
