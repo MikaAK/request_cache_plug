@@ -42,7 +42,10 @@ defmodule RequestCache.Plug do
     case RequestCache.ConCacheStore.get(cache_key) do
       {:ok, nil} -> conn |> enable_request_cache_for_conn |> cache_before_send_if_requested(cache_key)
 
-      {:ok, cached_result} -> halt_and_return_result(conn, cached_result)
+      {:ok, cached_result} ->
+        Logger.debug("[RequestCache.Plug] Returning cached result for #{cache_key}")
+
+        halt_and_return_result(conn, cached_result)
 
       {:error, e} ->
         Logger.error("[RequestCache.Plug] #{e}")
@@ -59,7 +62,11 @@ defmodule RequestCache.Plug do
 
     case RequestCache.ConCacheStore.get(cache_key) do
       {:ok, nil} -> conn |> enable_request_cache_for_conn |> cache_before_send_if_requested(cache_key)
-      {:ok, cached_result} -> halt_and_return_result(conn, cached_result)
+      {:ok, cached_result} ->
+        Logger.debug("[RequestCache.Plug] Returning cached result for #{cache_key}")
+
+        halt_and_return_result(conn, cached_result)
+
       {:error, e} ->
         Logger.error("[RequestCache.Plug] #{e}")
 
