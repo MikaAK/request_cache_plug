@@ -56,7 +56,7 @@ plug Plug.Parsers,
   pass: ["*/*"]
 ```
 
-We also need to setup a before_send hook to our absinthe_plug (if not using absinthe or you won't be using `&RequestCache.store/2` inside a resolver you can skip this step)
+We also need to setup a before_send hook to our absinthe_plug (if not using absinthe you can skip this step)
 ```elixir
 plug Absinthe.Plug, before_send: {RequestCache, :connect_absinthe_context_to_conn}
 ```
