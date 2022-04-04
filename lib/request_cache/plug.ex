@@ -124,18 +124,19 @@ defmodule RequestCache.Plug do
   end
 
   defp request_cache_module(conn) do
-    path = [conn_private_key(), :request, :cache]
-
-    get_in(conn.private, path) || get_in(conn.private || %{}, [:absinthe, :context | path])
+    conn_request(conn)[:cache]
   end
 
   defp request_cache_ttl(conn) do
-    conn.private[conn_private_key()][:request][:ttl]
+    conn_request(conn)[:ttl]
   end
 
   defp enabled_for_request?(conn) do
-    not is_nil(get_in(conn.private, [conn_private_key(), :request])) or
-    not is_nil(get_in(conn.private, [:absinthe, :context, conn_private_key(), :request]))
+    conn_request(conn) !== []
+  end
+
+  defp conn_request(conn) do
+    get_in(conn.private, [conn_private_key(), :request]) || get_in(conn.private, [:absinthe, :context, conn_private_key(), :request]) || []
   end
 
   defp fetch_query(conn) do
