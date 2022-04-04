@@ -1,5 +1,6 @@
 defmodule RequestCache.MiddlewareTest do
   use ExUnit.Case, async: true
+  import ExUnit.CaptureLog
 
   describe "&call/2" do
     test "stores request configuration inside the context under configured conn_priv_key" do
@@ -17,9 +18,9 @@ defmodule RequestCache.MiddlewareTest do
     test "throws exception when hasn't been enabled" do
       resolution = %Absinthe.Resolution{}
 
-      assert_raise RuntimeError, fn ->
+      assert capture_log(fn ->
         RequestCache.Middleware.call(resolution, ttl: :timer.seconds(10))
-      end
+      end) =~ "RequestCache requested"
     end
   end
 end

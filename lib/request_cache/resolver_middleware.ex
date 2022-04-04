@@ -31,7 +31,11 @@ if RequestCache.Application.dependency_found?(:absinthe) and RequestCache.Applic
       else
         Util.log_cache_disabled_message()
 
-        resolution
+        %{
+          resolution |
+          state: :resolved,
+          value: opts[:value],
+        }
       end
     end
   end

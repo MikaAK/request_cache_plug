@@ -16,10 +16,12 @@ if RequestCache.Application.dependency_found?(:absinthe) and RequestCache.Applic
 
     defp enable_cache_for_resolution(resolution, opts) do
       if resolution.context[RequestCache.Config.conn_private_key()][:enabled?] do
-        config = [request: Util.merge_default_opts(opts)]
-
         %{resolution |
-          context: Map.put(resolution.context, RequestCache.Config.conn_private_key(), config)
+          context: Map.update!(
+            resolution.context,
+            RequestCache.Config.conn_private_key(),
+            &Keyword.put(&1, :request, Util.merge_default_opts(opts))
+          )
         }
       else
         Util.log_cache_disabled_message()

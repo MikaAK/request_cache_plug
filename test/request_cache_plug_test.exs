@@ -2,6 +2,8 @@ defmodule RequestCachePlugTest do
   use ExUnit.Case, async: true
   use Plug.Test
 
+  import ExUnit.CaptureLog
+
   alias RequestCache.{ConCacheStore, Support.EnsureCalledOnlyOnce}
 
   defmodule Router do
@@ -14,6 +16,7 @@ defmodule RequestCachePlugTest do
 
     match "/my_route" do
       EnsureCalledOnlyOnce.call(conn.private[:call_pid])
+
       conn
         |> RequestCache.store(:timer.seconds(20))
         |> send_resp(200, Jason.encode!(%{test: Enum.random(1..100_000_000)}))
@@ -92,12 +95,12 @@ defmodule RequestCachePlugTest do
   end
 
   test "throws an error if router doesn't have RequestCache.Plug", %{caller_pid: pid} do
-    assert_raise Plug.Conn.WrapperError, fn ->
+    assert capture_log(fn ->
       :get
         |> conn("/my_route")
         |> put_private(:call_pid, pid)
         |> RouterWithoutPlug.call([])
-    end
+    end) =~ "RequestCache requested"
   end
 
   test "allows you to use `cache` key inside opts to override specific cache for a request" do
