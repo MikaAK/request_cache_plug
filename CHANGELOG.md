@@ -1,3 +1,7 @@
+# 0.1.5
+- fix some bugs around resolver usage of store
+- add verbose logging when enabled
+
 # 0.1.4
 - add debug log when item returned from cache
 

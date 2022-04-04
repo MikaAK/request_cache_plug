@@ -22,28 +22,45 @@ defmodule RequestCache.Plug do
   @impl Plug
   def call(conn, _) do
     if RequestCache.Config.enabled?() do
+      Util.verbose_log("[RequestCache.Plug] Hit request cache while enabled")
+
       call_for_api_type(conn)
     else
+      Util.verbose_log("[RequestCache.Plug] Hit request cache while disabled")
+
       conn
     end
   end
 
   defp call_for_api_type(%Plug.Conn{request_path: path, method: "GET"} = conn) when path in @graphql_paths do
+    Util.verbose_log("[RequestCache.Plug] GraphQL path detected")
+
     case fetch_query(conn) do
-      nil -> enable_request_cache_for_conn(conn)
+      nil ->
+        Util.verbose_log("[RequestCache.Plug] Couldn't find a cache key for GQL query")
+
+        enable_request_cache_for_conn(conn)
+
       {query_name, variables} ->
+        Util.verbose_log("[RequestCache.Plug] GraphQL query name #{query_name} detected with variables: #{inspect variables}")
+
         maybe_return_cached_result(conn, query_name, variables)
     end
   end
 
   defp call_for_api_type(%Plug.Conn{request_path: path, method: "GET"} = conn) when path not in @graphql_paths do
+    Util.verbose_log("[RequestCache.Plug] REST path detected")
+
     cache_key = rest_cache_key(conn)
 
     case RequestCache.ConCacheStore.get(cache_key) do
-      {:ok, nil} -> conn |> enable_request_cache_for_conn |> cache_before_send_if_requested(cache_key)
+      {:ok, nil} ->
+        Util.verbose_log("[RequestCache.Plug] REST enabling cache for conn and will cache if set")
+
+        conn |> enable_request_cache_for_conn |> cache_before_send_if_requested(cache_key)
 
       {:ok, cached_result} ->
-        Logger.debug("[RequestCache.Plug] Returning cached result for #{cache_key}")
+        Util.verbose_log("[RequestCache.Plug] Returning cached result for #{cache_key}")
 
         halt_and_return_result(conn, cached_result)
 
@@ -63,7 +80,7 @@ defmodule RequestCache.Plug do
     case RequestCache.ConCacheStore.get(cache_key) do
       {:ok, nil} -> conn |> enable_request_cache_for_conn |> cache_before_send_if_requested(cache_key)
       {:ok, cached_result} ->
-        Logger.debug("[RequestCache.Plug] Returning cached result for #{cache_key}")
+        Util.verbose_log("[RequestCache.Plug] Returning cached result for #{cache_key}")
 
         halt_and_return_result(conn, cached_result)
 
@@ -91,12 +108,17 @@ defmodule RequestCache.Plug do
   defp cache_before_send_if_requested(conn, cache_key) do
     Plug.Conn.register_before_send(conn, fn new_conn ->
       if enabled_for_request?(new_conn) do
+        Util.verbose_log("[RequestCache.Plug] Cache enabled before send, setting into cache...")
+
         with :ok <- request_cache_module(new_conn).put(cache_key, request_cache_ttl(new_conn), new_conn.resp_body) do
-          Logger.debug("[RequestCache.Plug] Successfuly put #{cache_key} into cache\n#{new_conn.resp_body}")
+
+          Util.verbose_log("[RequestCache.Plug] Successfuly put #{cache_key} into cache\n#{new_conn.resp_body}")
         end
 
         new_conn
       else
+        Util.verbose_log("[RequestCache.Plug] Cache disabled in before_send callback")
+
         new_conn
       end
     end)

@@ -27,6 +27,8 @@ if RequestCache.Application.dependency_found?(:absinthe) and RequestCache.Applic
           )
         }
 
+        Util.verbose_log("[RequestCache.ResolverMiddleware] Enabling cache for resolution")
+
         resolution
       else
         Util.log_cache_disabled_message()

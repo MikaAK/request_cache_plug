@@ -24,4 +24,10 @@ defmodule RequestCache.Util do
   def log_cache_disabled_message do
     Logger.debug("RequestCache requested but hasn't been enabled, ensure query has a name and the RequestCache.Plug is part of your Endpoint")
   end
+
+  def verbose_log(message) do
+    if RequestCache.Config.verbose?() do
+      Logger.debug(message)
+    end
+  end
 end

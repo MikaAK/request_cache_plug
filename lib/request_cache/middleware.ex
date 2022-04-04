@@ -16,6 +16,10 @@ if RequestCache.Application.dependency_found?(:absinthe) and RequestCache.Applic
 
     defp enable_cache_for_resolution(resolution, opts) do
       if resolution.context[RequestCache.Config.conn_private_key()][:enabled?] do
+        if RequestCache.Config.verbose?() do
+          Util.verbose_log("[RequestCache.Middleware] Enabling cache for resolution")
+        end
+
         %{resolution |
           context: Map.update!(
             resolution.context,

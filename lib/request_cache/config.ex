@@ -3,6 +3,10 @@ defmodule RequestCache.Config do
 
   @app :request_cache
 
+  def verbose? do
+    Application.get_env(@app, :verbose?) || false
+  end
+
   def graphql_paths do
     Application.get_env(@app, :graphql_paths) || ["/graphiql", "/graphql"]
   end
