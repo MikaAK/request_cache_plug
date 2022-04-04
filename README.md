@@ -150,3 +150,7 @@ end
 - Caches for gql are stored via the name parameter that comes back from the query (for now) so you must name your queries to get caching
 - Absinthe and ConCache are optional dependencies, if you don't have them you won't have access to `RequestCache.Middleware` or `RequestCache.ConCacheStore`
 - If no ConCache is found, you must set `config :request_cache_module` to something else
+
+### Example Reduction
+In the case of a large (16mb) payload running through absinthe, this plug cuts down response times from 400+ms -> <400μs
+<img width="704" alt="image" src="https://user-images.githubusercontent.com/4650931/161464277-713e994b-1246-43ac-82a1-fb2442cd7bce.png">
