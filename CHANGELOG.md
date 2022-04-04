@@ -1,3 +1,6 @@
+# 0.1.6
+- fix issue with plug not pulling ttls out when using absinthe plugs
+
 # 0.1.5
 - fix some bugs around resolver usage of store
 - add verbose logging when enabled
