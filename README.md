@@ -153,4 +153,6 @@ end
 
 ### Example Reduction
 In the case of a large (16mb) payload running through absinthe, this plug cuts down response times from 400+ms -> <400μs
+
+
 <img width="704" alt="image" src="https://user-images.githubusercontent.com/4650931/161464277-713e994b-1246-43ac-82a1-fb2442cd7bce.png">
