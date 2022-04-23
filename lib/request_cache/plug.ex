@@ -1,7 +1,7 @@
 defmodule RequestCache.Plug do
   require Logger
 
-  alias RequestCache.Util
+  alias RequestCache.{Config, Util}
 
   @moduledoc """
   This plug allows you to cache GraphQL requests based off their query name and
@@ -53,7 +53,7 @@ defmodule RequestCache.Plug do
 
     cache_key = rest_cache_key(conn)
 
-    case RequestCache.ConCacheStore.get(cache_key) do
+    case Config.request_cache_module().get(cache_key) do
       {:ok, nil} ->
         Util.verbose_log("[RequestCache.Plug] REST enabling cache for conn and will cache if set")
 
@@ -76,8 +76,7 @@ defmodule RequestCache.Plug do
   defp maybe_return_cached_result(conn, query_name, variables) do
     cache_key = Util.create_key(query_name, variables)
 
-
-    case RequestCache.ConCacheStore.get(cache_key) do
+    case Config.request_cache_module().get(cache_key) do
       {:ok, nil} -> conn |> enable_request_cache_for_conn |> cache_before_send_if_requested(cache_key)
       {:ok, cached_result} ->
         Util.verbose_log("[RequestCache.Plug] Returning cached result for #{cache_key}")
