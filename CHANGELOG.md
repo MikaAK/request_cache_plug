@@ -1,4 +1,7 @@
 # 0.1.6
+- fix issue with plug not pulling configured cache
+
+# 0.1.6
 - fix issue with plug not pulling ttls out when using absinthe plugs
 
 # 0.1.5
