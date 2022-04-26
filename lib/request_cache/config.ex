@@ -1,7 +1,7 @@
 defmodule RequestCache.Config do
   @moduledoc false
 
-  @app :request_cache
+  @app :request_cache_plug
 
   def verbose? do
     Application.get_env(@app, :verbose?) || false
