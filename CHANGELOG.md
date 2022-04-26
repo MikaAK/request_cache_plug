@@ -1,4 +1,7 @@
-# 0.1.6
+# 0.1.8
+- fix config app not matching app name
+
+# 0.1.7
 - fix issue with plug not pulling configured cache
 
 # 0.1.6
