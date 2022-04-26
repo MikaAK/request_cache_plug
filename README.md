@@ -28,7 +28,7 @@ Documentation can be found at <https://hexdocs.pm/request_cache_plug>.
 ### Config
 This is the default config, it can all be changed
 ```elixir
-config :request_cache,
+config :request_cache_plug,
   enabled?: true,
   verbose?: false,
   graphql_paths: ["/graphiql", "/graphql"],
