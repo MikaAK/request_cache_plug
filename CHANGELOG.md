@@ -1,3 +1,6 @@
+# 0.1.9
+- Swap to md5 hashing as phash doesn't contain enough range
+
 # 0.1.8
 - fix config app not matching app name
 
