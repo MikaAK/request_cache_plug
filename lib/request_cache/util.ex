@@ -17,8 +17,12 @@ defmodule RequestCache.Util do
     ], opts)
   end
 
-  def create_key(query_name, variables) do
-    "#{query_name}:#{:erlang.phash2(variables)}"
+  def create_key(url_path, query_string) do
+    "#{url_path}:#{hash_string(query_string)}"
+  end
+
+  defp hash_string(query_string) do
+    :md5 |> :crypto.hash(query_string) |> Base.encode16(padding: false)
   end
 
   def log_cache_disabled_message do

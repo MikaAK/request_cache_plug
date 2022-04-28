@@ -32,20 +32,10 @@ defmodule RequestCache.Plug do
     end
   end
 
-  defp call_for_api_type(%Plug.Conn{request_path: path, method: "GET"} = conn) when path in @graphql_paths do
-    Util.verbose_log("[RequestCache.Plug] GraphQL path detected")
+  defp call_for_api_type(%Plug.Conn{request_path: path, method: "GET", query_string: query_string} = conn) when path in @graphql_paths do
+    Util.verbose_log("[RequestCache.Plug] GraphQL query detected")
 
-    case fetch_query(conn) do
-      nil ->
-        Util.verbose_log("[RequestCache.Plug] Couldn't find a cache key for GQL query")
-
-        enable_request_cache_for_conn(conn)
-
-      {query_name, variables} ->
-        Util.verbose_log("[RequestCache.Plug] GraphQL query name #{query_name} detected with variables: #{inspect variables}")
-
-        maybe_return_cached_result(conn, query_name, variables)
-    end
+    maybe_return_cached_result(conn, path, query_string)
   end
 
   defp call_for_api_type(%Plug.Conn{request_path: path, method: "GET"} = conn) when path not in @graphql_paths do
@@ -73,8 +63,8 @@ defmodule RequestCache.Plug do
 
   defp call_for_api_type(conn), do: conn
 
-  defp maybe_return_cached_result(conn, query_name, variables) do
-    cache_key = Util.create_key(query_name, variables)
+  defp maybe_return_cached_result(conn, request_path, query_string) do
+    cache_key = Util.create_key(request_path, query_string)
 
     case Config.request_cache_module().get(cache_key) do
       {:ok, nil} -> conn |> enable_request_cache_for_conn |> cache_before_send_if_requested(cache_key)
@@ -94,14 +84,8 @@ defmodule RequestCache.Plug do
     conn |> Plug.Conn.halt |> Plug.Conn.send_resp(200, result)
   end
 
-  defp rest_cache_key(%Plug.Conn{request_path: path} = conn) do
-    case Plug.Conn.fetch_query_params(conn) do
-      %{query_params: query_params} when query_params !== "" ->
-        Util.create_key(path, query_params)
-
-      _ ->
-        Util.create_key(path, %{})
-    end
+  defp rest_cache_key(%Plug.Conn{request_path: path, query_string: query_string}) do
+    Util.create_key(path, query_string)
   end
 
   defp cache_before_send_if_requested(conn, cache_key) do
@@ -137,19 +121,6 @@ defmodule RequestCache.Plug do
 
   defp conn_request(conn) do
     get_in(conn.private, [conn_private_key(), :request]) || get_in(conn.private, [:absinthe, :context, conn_private_key(), :request]) || []
-  end
-
-  defp fetch_query(conn) do
-    case Plug.Conn.fetch_query_params(conn) do
-      %{query_params: %{"query" => query} = params} ->
-        query_name = Util.parse_gql_name(query)
-
-        if query_name do
-          {query_name, params["variables"] || %{}}
-        end
-
-      _ -> nil
-    end
   end
 
   if RequestCache.Application.dependency_found?(:absinthe_plug) do

@@ -131,21 +131,6 @@ defmodule RequestCacheAbsintheTest do
     end) =~ "RequestCache requested"
   end
 
-  test "unammed queries don't cache but are allowed through", %{call_pid: pid} do
-    :get
-      |> conn(graphql_url(@unnamed_query))
-      |> Absinthe.Plug.put_options(context: %{call_pid: pid})
-      |> Router.call([])
-
-    assert_raise Plug.Conn.WrapperError, fn ->
-      :get
-        |> conn(graphql_url(@unnamed_query))
-        |> Absinthe.Plug.put_options(context: %{call_pid: pid})
-        |> Router.call([])
-        |> Map.get(:resp_body)
-    end
-  end
-
   test "allows you to use `cache` key inside opts to override specific cache for a request" do
   end
 
