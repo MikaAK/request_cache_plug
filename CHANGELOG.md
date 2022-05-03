@@ -1,3 +1,6 @@
+# 0.1.10
+- Add contenttype of application/json to response
+
 # 0.1.9
 - Swap to md5 hashing as phash doesn't contain enough range
 
