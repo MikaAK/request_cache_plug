@@ -103,6 +103,29 @@ defmodule RequestCachePlugTest do
     end) =~ "RequestCache requested"
   end
 
+  test "includes Content-Type header with value application/json from the cache", %{
+    caller_pid: pid
+  } do
+    ConCacheStore.start_link()
+
+    assert %Plug.Conn{} =
+             :get
+             |> conn("/my_route")
+             |> put_private(:call_pid, pid)
+             |> RouterWithBreakingPlug.call([])
+
+    assert %Plug.Conn{resp_headers: resp_headers} =
+             :get
+             |> conn("/my_route")
+             |> put_private(:call_pid, pid)
+             |> RouterWithBreakingPlug.call([])
+
+    assert resp_headers === [
+             {"cache-control", "max-age=0, private, must-revalidate"},
+             {"content-type", "application/json; charset=utf-8"}
+           ]
+  end
+
   test "allows you to use `cache` key inside opts to override specific cache for a request" do
   end
 end
