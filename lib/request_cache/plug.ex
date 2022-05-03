@@ -81,7 +81,10 @@ defmodule RequestCache.Plug do
   end
 
   defp halt_and_return_result(conn, result) do
-    conn |> Plug.Conn.halt |> Plug.Conn.send_resp(200, result)
+    conn
+    |> Plug.Conn.halt()
+    |> Plug.Conn.put_resp_content_type("application/json")
+    |> Plug.Conn.send_resp(200, result)
   end
 
   defp rest_cache_key(%Plug.Conn{request_path: path, query_string: query_string}) do
