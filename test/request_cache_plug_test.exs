@@ -85,11 +85,13 @@ defmodule RequestCachePlugTest do
 
     assert %Plug.Conn{} = :get
       |> conn("/my_route")
+      |> RequestCache.Support.Utils.ensure_default_opts()
       |> put_private(:call_pid, pid)
       |> RouterWithBreakingPlug.call([])
 
     assert %Plug.Conn{} = :get
       |> conn("/my_route")
+      |> RequestCache.Support.Utils.ensure_default_opts()
       |> put_private(:call_pid, pid)
       |> RouterWithBreakingPlug.call([])
   end
@@ -111,14 +113,16 @@ defmodule RequestCachePlugTest do
     assert %Plug.Conn{} =
              :get
              |> conn("/my_route")
+             |> RequestCache.Support.Utils.ensure_default_opts()
              |> put_private(:call_pid, pid)
-             |> RouterWithBreakingPlug.call([])
+             |> Router.call([])
 
     assert %Plug.Conn{resp_headers: resp_headers} =
              :get
              |> conn("/my_route")
+             |> RequestCache.Support.Utils.ensure_default_opts()
              |> put_private(:call_pid, pid)
-             |> RouterWithBreakingPlug.call([])
+             |> Router.call([])
 
     assert resp_headers === [
              {"cache-control", "max-age=0, private, must-revalidate"},

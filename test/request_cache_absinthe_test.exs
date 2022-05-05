@@ -66,7 +66,6 @@ defmodule RequestCacheAbsintheTest do
   @query "query Hello { hello }"
   @query_2 "query Hello2 { helloWorld }"
   @query_error "query HelloError { helloError }"
-  @unnamed_query "query { hello }"
 
   setup_all do
     {:ok, _pid} = RequestCache.ConCacheStore.start_link()
@@ -83,11 +82,13 @@ defmodule RequestCacheAbsintheTest do
   test "allows you to use middleware before a resolver to cache the results of the request", %{call_pid: pid} do
     conn = :get
       |> conn(graphql_url(@query_2))
+      |> RequestCache.Support.Utils.ensure_default_opts()
       |> Absinthe.Plug.put_options(context: %{call_pid: pid})
       |> Router.call([])
 
     assert conn.resp_body === :get
       |> conn(graphql_url(@query_2))
+      |> RequestCache.Support.Utils.ensure_default_opts()
       |> Absinthe.Plug.put_options(context: %{call_pid: pid})
       |> Router.call([])
       |> Map.get(:resp_body)
@@ -96,11 +97,13 @@ defmodule RequestCacheAbsintheTest do
   test "allows you to use &store/2 in a resolver to cache the results of the request", %{call_pid: pid} do
     conn = :get
       |> conn(graphql_url(@query))
+      |> RequestCache.Support.Utils.ensure_default_opts()
       |> Absinthe.Plug.put_options(context: %{call_pid: pid})
       |> Router.call([])
 
     assert conn.resp_body === :get
       |> conn(graphql_url(@query))
+      |> RequestCache.Support.Utils.ensure_default_opts()
       |> Absinthe.Plug.put_options(context: %{call_pid: pid})
       |> Router.call([])
       |> Map.get(:resp_body)
@@ -109,12 +112,14 @@ defmodule RequestCacheAbsintheTest do
   test "throws an error when called twice without cache", %{call_pid: pid} do
     conn = :get
       |> conn(graphql_url(@query_error))
+      |> RequestCache.Support.Utils.ensure_default_opts()
       |> Absinthe.Plug.put_options(context: %{call_pid: pid})
       |> Router.call([])
 
     assert_raise Plug.Conn.WrapperError, fn ->
       assert conn.resp_body === :get
         |> conn(graphql_url(@query_error))
+        |> RequestCache.Support.Utils.ensure_default_opts()
         |> Absinthe.Plug.put_options(context: %{call_pid: pid})
         |> Router.call([])
         |> Map.get(:resp_body)
