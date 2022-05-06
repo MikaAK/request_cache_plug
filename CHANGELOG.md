@@ -1,3 +1,7 @@
+# 0.1.11
+- Fix error messaging 
+- Make sure cache module gets pulled out of config or the conn opts properly
+
 # 0.1.10
 - Add contenttype of application/json to response
 
