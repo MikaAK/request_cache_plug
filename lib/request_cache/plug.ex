@@ -1,12 +1,12 @@
 defmodule RequestCache.Plug do
   require Logger
 
-  alias RequestCache.{Config, Util}
+  alias RequestCache.Util
 
   @moduledoc """
   This plug allows you to cache GraphQL requests based off their query name and
   variables. This should be placed right after telemetry and before parsers so that it can
-  stop any processing of the requests and immediatley return a response.
+  stop any processing of the requests and immediately return a response.
 
   Please see `RequestCache` for more details
   """
@@ -43,11 +43,13 @@ defmodule RequestCache.Plug do
 
     cache_key = rest_cache_key(conn)
 
-    case Config.request_cache_module().get(cache_key) do
+    case request_cache_module(conn).get(cache_key) do
       {:ok, nil} ->
         Util.verbose_log("[RequestCache.Plug] REST enabling cache for conn and will cache if set")
 
-        conn |> enable_request_cache_for_conn |> cache_before_send_if_requested(cache_key)
+        conn
+        |> enable_request_cache_for_conn
+        |> cache_before_send_if_requested(cache_key)
 
       {:ok, cached_result} ->
         Util.verbose_log("[RequestCache.Plug] Returning cached result for #{cache_key}")
@@ -55,7 +57,7 @@ defmodule RequestCache.Plug do
         halt_and_return_result(conn, cached_result)
 
       {:error, e} ->
-        Logger.error("[RequestCache.Plug] #{e}")
+        Logger.error("[RequestCache.Plug] #{inspect(e)}")
 
         enable_request_cache_for_conn(conn)
     end
@@ -66,15 +68,19 @@ defmodule RequestCache.Plug do
   defp maybe_return_cached_result(conn, request_path, query_string) do
     cache_key = Util.create_key(request_path, query_string)
 
-    case Config.request_cache_module().get(cache_key) do
-      {:ok, nil} -> conn |> enable_request_cache_for_conn |> cache_before_send_if_requested(cache_key)
+    case request_cache_module(conn).get(cache_key) do
+      {:ok, nil} ->
+        conn
+        |> enable_request_cache_for_conn
+        |> cache_before_send_if_requested(cache_key)
+
       {:ok, cached_result} ->
         Util.verbose_log("[RequestCache.Plug] Returning cached result for #{cache_key}")
 
         halt_and_return_result(conn, cached_result)
 
       {:error, e} ->
-        Logger.error("[RequestCache.Plug] #{e}")
+        Logger.error("[RequestCache.Plug] #{inspect(e)}")
 
         enable_request_cache_for_conn(conn)
     end
@@ -98,7 +104,7 @@ defmodule RequestCache.Plug do
 
         with :ok <- request_cache_module(new_conn).put(cache_key, request_cache_ttl(new_conn), new_conn.resp_body) do
 
-          Util.verbose_log("[RequestCache.Plug] Successfuly put #{cache_key} into cache\n#{new_conn.resp_body}")
+          Util.verbose_log("[RequestCache.Plug] Successfully put #{cache_key} into cache\n#{new_conn.resp_body}")
         end
 
         new_conn
@@ -122,8 +128,10 @@ defmodule RequestCache.Plug do
     conn_request(conn) !== []
   end
 
-  defp conn_request(conn) do
-    get_in(conn.private, [conn_private_key(), :request]) || get_in(conn.private, [:absinthe, :context, conn_private_key(), :request]) || []
+  defp conn_request(%{private: private}) do
+    get_in(private, [conn_private_key(), :request])
+    || get_in(private, [:absinthe, :context, conn_private_key(), :request])
+    || []
   end
 
   if RequestCache.Application.dependency_found?(:absinthe_plug) do
