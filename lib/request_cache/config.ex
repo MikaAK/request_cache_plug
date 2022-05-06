@@ -31,7 +31,7 @@ defmodule RequestCache.Config do
     Application.get_env(@app, :default_concache_opts) || [
       name: :con_cache_request_cache_store,
       global_ttl: default_ttl(),
-      aquire_lock_timeout: :timer.seconds(1),
+      acquire_lock_timeout: :timer.seconds(1),
       ttl_check_interval: :timer.seconds(1),
       ets_options: [write_concurrency: true, read_concurrency: true]
     ]
