@@ -1,7 +1,7 @@
 defmodule RequestCache.Plug do
   require Logger
 
-  alias RequestCache.Util
+  alias RequestCache.{Util, Metrics}
 
   @moduledoc """
   This plug allows you to cache GraphQL requests based off their query name and
@@ -23,7 +23,6 @@ defmodule RequestCache.Plug do
   def call(conn, _) do
     if RequestCache.Config.enabled?() do
       Util.verbose_log("[RequestCache.Plug] Hit request cache while enabled")
-
       call_for_api_type(conn)
     else
       Util.verbose_log("[RequestCache.Plug] Hit request cache while disabled")
@@ -45,6 +44,7 @@ defmodule RequestCache.Plug do
 
     case request_cache_module(conn).get(cache_key) do
       {:ok, nil} ->
+        Metrics.inc_rest_cache_miss(%{cache_key: cache_key})
         Util.verbose_log("[RequestCache.Plug] REST enabling cache for conn and will cache if set")
 
         conn
@@ -52,6 +52,7 @@ defmodule RequestCache.Plug do
         |> cache_before_send_if_requested(cache_key)
 
       {:ok, cached_result} ->
+        Metrics.inc_rest_cache_hit(%{cache_key: cache_key})
         Util.verbose_log("[RequestCache.Plug] Returning cached result for #{cache_key}")
 
         halt_and_return_result(conn, cached_result)
@@ -70,11 +71,14 @@ defmodule RequestCache.Plug do
 
     case request_cache_module(conn).get(cache_key) do
       {:ok, nil} ->
+        Metrics.inc_graphql_cache_miss(%{cache_key: cache_key})
+
         conn
         |> enable_request_cache_for_conn
         |> cache_before_send_if_requested(cache_key)
 
       {:ok, cached_result} ->
+        Metrics.inc_graphql_cache_hit(%{cache_key: cache_key})
         Util.verbose_log("[RequestCache.Plug] Returning cached result for #{cache_key}")
 
         halt_and_return_result(conn, cached_result)
@@ -101,9 +105,9 @@ defmodule RequestCache.Plug do
     Plug.Conn.register_before_send(conn, fn new_conn ->
       if enabled_for_request?(new_conn) do
         Util.verbose_log("[RequestCache.Plug] Cache enabled before send, setting into cache...")
-
-        with :ok <- request_cache_module(new_conn).put(cache_key, request_cache_ttl(new_conn), new_conn.resp_body) do
-
+        ttl = request_cache_ttl(new_conn)
+        with :ok <- request_cache_module(new_conn).put(cache_key, ttl, new_conn.resp_body) do
+          Metrics.inc_cache_put(%{cache_key: cache_key, ttl: ttl, timestamp: DateTime.utc_now()})
           Util.verbose_log("[RequestCache.Plug] Successfully put #{cache_key} into cache\n#{new_conn.resp_body}")
         end
 
