@@ -7,8 +7,7 @@ defmodule RequestCache.Application do
 
   @impl true
   def start(_type, _args) do
-    children = [
-    ]
+    children = []
 
     # See https://hexdocs.pm/elixir/Supervisor.html
     # for other strategies and supported options
@@ -23,4 +22,3 @@ defmodule RequestCache.Application do
     end)
   end
 end
-

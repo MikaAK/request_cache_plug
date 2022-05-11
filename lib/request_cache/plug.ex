@@ -117,7 +117,7 @@ defmodule RequestCache.Plug do
   end
 
   defp request_cache_module(conn) do
-    conn_request(conn)[:cache]
+    conn_request(conn)[:cache] || RequestCache.Config.request_cache_module()
   end
 
   defp request_cache_ttl(conn) do
