@@ -67,12 +67,6 @@ defmodule RequestCacheAbsintheTest do
   @query_2 "query Hello2 { helloWorld }"
   @query_error "query HelloError { helloError }"
 
-  setup_all do
-    {:ok, _pid} = RequestCache.ConCacheStore.start_link()
-
-    :ok
-  end
-
   setup do
     {:ok, pid} = EnsureCalledOnlyOnce.start_link()
 

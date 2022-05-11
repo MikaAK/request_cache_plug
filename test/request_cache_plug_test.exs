@@ -4,7 +4,7 @@ defmodule RequestCachePlugTest do
 
   import ExUnit.CaptureLog
 
-  alias RequestCache.{ConCacheStore, Support.EnsureCalledOnlyOnce}
+  alias RequestCache.Support.EnsureCalledOnlyOnce
 
   defmodule Router do
     use Plug.Router
@@ -81,8 +81,6 @@ defmodule RequestCachePlugTest do
   end
 
   test "stops any plug from running if cache is found", %{caller_pid: pid} do
-    ConCacheStore.start_link()
-
     assert %Plug.Conn{} = :get
       |> conn("/my_route")
       |> RequestCache.Support.Utils.ensure_default_opts()
@@ -108,8 +106,6 @@ defmodule RequestCachePlugTest do
   test "includes Content-Type header with value application/json from the cache", %{
     caller_pid: pid
   } do
-    ConCacheStore.start_link()
-
     assert %Plug.Conn{} =
              :get
              |> conn("/my_route")
