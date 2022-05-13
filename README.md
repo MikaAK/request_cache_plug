@@ -37,7 +37,7 @@ config :request_cache_plug,
   default_ttl: :timer.hours(1),
   default_concache_opts: [
     ttl_check_interval: :timer.seconds(1),
-    aquire_lock_timeout: :timer.seconds(1),
+    acquire_lock_timeout: :timer.seconds(1),
     ets_options: [write_concurrency: true, read_concurrency: true]
   ]
 ```
