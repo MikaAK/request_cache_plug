@@ -1,4 +1,7 @@
 # 0.1.11
+- Add telemetry metrics
+
+# 0.1.11
 - Fix error messaging 
 - Make sure cache module gets pulled out of config or the conn opts properly
 
