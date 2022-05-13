@@ -32,9 +32,7 @@ defmodule RequestCache.MixProject do
       {:plug, "~> 1.13"},
 
       {:jason, "~> 1.0", only: :test},
-      {:ex_doc, ">= 0.0.0", only: :dev},
-      {:telemetry, "~> 1.1"},
-      {:telemetry_metrics, "~> 0.6.1"}
+      {:ex_doc, ">= 0.0.0", only: :dev}
     ]
   end
 
