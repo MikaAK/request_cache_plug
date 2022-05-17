@@ -1,8 +1,11 @@
-# 0.1.11
+# 0.1.13
+- Add custom labels per endpoint via telemetry metrics
+
+# 0.1.12
 - Add telemetry metrics
 
 # 0.1.11
-- Fix error messaging 
+- Fix error messaging
 - Make sure cache module gets pulled out of config or the conn opts properly
 
 # 0.1.10
