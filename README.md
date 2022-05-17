@@ -145,6 +145,48 @@ def index(conn, params) do
 end
 ```
 
+### telemetry
+
+Cache events are emitted via :telemetry. Events are:
+
+- `[:request_cache_plug, :graphql, :cache_hit]`
+- `[:request_cache_plug, :graphql, :cache_miss]`
+- `[:request_cache_plug, :rest, :cache_hit]`
+- `[:request_cache_plug, :rest, :cache_miss]`
+- `[:request_cache_plug, :cache_put]`
+
+For GraphQL endpoints it is possible to provide a list of atoms that will be passed through to the event metadata; e.g.:
+
+##### With Middleware
+
+```elixir
+field :user, :user do
+  arg :id, non_null(:id)
+
+  middleware RequestCache.Middleware, ttl: :timer.seconds(60), cache: MyCacheModule, labels: [:service, :endpoint]
+
+  resolve &Resolvers.User.find/2
+end
+```
+
+##### In a Resolver
+
+```elixir
+def all(params, resolution) do
+  RequestCache.store(value, ttl: :timer.seconds(60), cache: MyCacheModule, labels: [:service, :endpoint])
+end
+```
+
+The events will look like this:
+
+```elixir
+{ 
+  [:request_cache_plug, :graphql, :cache_hit], 
+  %{count: 1}, 
+  %{ttl: 3600000, cache_key: "/graphql:NNNN", labels: [:service, :endpoint]} 
+}
+```
+
 ### Notes/Gotchas
 - In order for this caching to work, we cannot be using POST requests as specced out by GraphQL, not for queries at least, fortunately this doesn't actually matter since we can use any http method we want (there will be a limit to query size), in a production app you may be doing this already due to the caching you gain from CloudFlare
 - Caches for gql are stored via the name parameter that comes back from the query (for now) so you must name your queries to get caching

@@ -71,14 +71,14 @@ defmodule RequestCache.Plug do
 
     case request_cache_module(conn).get(cache_key) do
       {:ok, nil} ->
-        Metrics.inc_graphql_cache_miss(%{cache_key: cache_key})
+        Metrics.inc_graphql_cache_miss(event_metadata(conn, cache_key))
 
         conn
         |> enable_request_cache_for_conn
         |> cache_before_send_if_requested(cache_key)
 
       {:ok, cached_result} ->
-        Metrics.inc_graphql_cache_hit(%{cache_key: cache_key})
+        Metrics.inc_graphql_cache_hit(event_metadata(conn, cache_key))
         Util.verbose_log("[RequestCache.Plug] Returning cached result for #{cache_key}")
 
         halt_and_return_result(conn, cached_result)
@@ -107,7 +107,7 @@ defmodule RequestCache.Plug do
         Util.verbose_log("[RequestCache.Plug] Cache enabled before send, setting into cache...")
         ttl = request_cache_ttl(new_conn)
         with :ok <- request_cache_module(new_conn).put(cache_key, ttl, new_conn.resp_body) do
-          Metrics.inc_cache_put(%{cache_key: cache_key, ttl: ttl, timestamp: DateTime.utc_now()})
+          Metrics.inc_cache_put(event_metadata(conn, cache_key))
           Util.verbose_log("[RequestCache.Plug] Successfully put #{cache_key} into cache\n#{new_conn.resp_body}")
         end
 
@@ -120,12 +120,25 @@ defmodule RequestCache.Plug do
     end)
   end
 
+  @spec event_metadata(Plug.Conn.t(), String.t()) :: map()
+  defp event_metadata(conn, cache_key) do
+    %{
+      cache_key: cache_key,
+      labels: request_cache_labels(conn),
+      ttl: request_cache_ttl(conn)
+    }
+  end
+
   defp request_cache_module(conn) do
     conn_request(conn)[:cache] || RequestCache.Config.request_cache_module()
   end
 
   defp request_cache_ttl(conn) do
     conn_request(conn)[:ttl]
+  end
+
+  defp request_cache_labels(conn) do
+    conn_request(conn)[:labels]
   end
 
   defp enabled_for_request?(conn) do
