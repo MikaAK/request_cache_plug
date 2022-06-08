@@ -37,7 +37,7 @@ if RequestCache.Application.dependency_found?(:absinthe) and RequestCache.Applic
 
     defp ensure_valid_ttl(opts) do
       ttl = opts[:ttl] || RequestCache.Config.default_ttl()
-      Keyword.merge(opts, [ttl: ttl])
+      Keyword.put(opts, :ttl, ttl)
     end
   end
 end
