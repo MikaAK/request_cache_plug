@@ -6,6 +6,7 @@ if RequestCache.Application.dependency_found?(:absinthe) and RequestCache.Applic
 
     @impl Absinthe.Middleware
     def call(%Absinthe.Resolution{} = resolution, opts) when is_list(opts) do
+      opts = ensure_valid_ttl(opts)
       enable_cache_for_resolution(resolution, opts)
     end
 
@@ -33,6 +34,10 @@ if RequestCache.Application.dependency_found?(:absinthe) and RequestCache.Applic
         resolution
       end
     end
+
+    defp ensure_valid_ttl(opts) do
+      ttl = opts[:ttl] || RequestCache.Config.default_ttl()
+      Keyword.merge(opts, [ttl: ttl])
+    end
   end
 end
-
