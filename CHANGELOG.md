@@ -1,3 +1,6 @@
+# 0.1.14
+- Ensure default ttl is applied properly
+
 # 0.1.13
 - Add custom labels per endpoint via telemetry metrics
 
