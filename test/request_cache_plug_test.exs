@@ -103,15 +103,19 @@ defmodule RequestCachePlugTest do
     end) =~ "RequestCache requested"
   end
 
-  test "includes Content-Type header with value application/json from the cache", %{
+  test "includes proper headers with when served from the cache", %{
     caller_pid: pid
   } do
-    assert %Plug.Conn{} =
+    assert %Plug.Conn{resp_headers: uncached_headers} =
              :get
              |> conn("/my_route")
              |> RequestCache.Support.Utils.ensure_default_opts()
              |> put_private(:call_pid, pid)
              |> Router.call([])
+
+    assert uncached_headers === [
+       {"cache-control", "max-age=0, private, must-revalidate"}
+    ]
 
     assert %Plug.Conn{resp_headers: resp_headers} =
              :get
@@ -122,6 +126,7 @@ defmodule RequestCachePlugTest do
 
     assert resp_headers === [
              {"cache-control", "max-age=0, private, must-revalidate"},
+             {"rc-cache-status", "HIT"},
              {"content-type", "application/json; charset=utf-8"}
            ]
   end

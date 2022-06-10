@@ -15,6 +15,7 @@ defmodule RequestCache.Plug do
 
   # This is compile time so we can check quicker
   @graphql_paths RequestCache.Config.graphql_paths()
+  @request_cache_header "rc-cache-status"
 
   @impl Plug
   def init(opts), do: opts
@@ -93,6 +94,7 @@ defmodule RequestCache.Plug do
   defp halt_and_return_result(conn, result) do
     conn
     |> Plug.Conn.halt()
+    |> Plug.Conn.put_resp_header(@request_cache_header, "HIT")
     |> Plug.Conn.put_resp_content_type("application/json")
     |> Plug.Conn.send_resp(200, result)
   end
