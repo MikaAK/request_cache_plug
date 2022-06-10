@@ -1,3 +1,6 @@
+# 0.2.0
+- Add header to signify request cache is running
+
 # 0.1.14
 - Ensure default ttl is applied properly
 
