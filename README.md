@@ -1,6 +1,6 @@
 ## RequestCache
 
-[![Test](https://github.com/MikaAK/request_cache_plug/actions/workflows/test-actions.yml/badge.svg)](https://github.com/MikaAK/request_cache_plug/actions/workflows/test-actions.yml)
+[![Test/Credo](https://github.com/MikaAK/request_cache_plug/actions/workflows/test-actions.yml/badge.svg)](https://github.com/MikaAK/request_cache_plug/actions/workflows/test-actions.yml)
 [![Hex version badge](https://img.shields.io/hexpm/v/request_cache_plug.svg)](https://hex.pm/packages/request_cache_plug)
 
 This plug allows us to cache our graphql queries and phoenix controller requests declaritevly
