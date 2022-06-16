@@ -31,10 +31,14 @@ defmodule RequestCache.MixProject do
       {:con_cache, "~> 1.0", optional: true},
       {:plug, "~> 1.13"},
 
-      {:jason, "~> 1.0", only: :test},
+      {:jason, "~> 1.0", only: [:test, :dev]},
       {:ex_doc, ">= 0.0.0", only: :dev},
+
       {:telemetry, "~> 1.1"},
-      {:telemetry_metrics, "~> 0.6.1"}
+      {:telemetry_metrics, "~> 0.6.1"},
+
+      {:credo, "~> 1.6", only: [:test, :dev], runtime: false},
+      {:blitz_credo_checks, "~> 0.1", only: [:test, :dev], runtime: false}
     ]
   end
 
