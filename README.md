@@ -193,6 +193,10 @@ The events will look like this:
 - Absinthe and ConCache are optional dependencies, if you don't have them you won't have access to `RequestCache.Middleware` or `RequestCache.ConCacheStore`
 - If no ConCache is found, you must set `config :request_cache_module` to something else
 
+### Caching Header
+When an item is served from the cache, we return a header `rc-cache-status` which has a value of `HIT`. Using this you can tell if the item was 
+served out of cache, without it the item was fetched
+
 ### Example Reduction
 In the case of a large (16mb) payload running through absinthe, this plug cuts down response times from 400+ms -> <400μs
 
