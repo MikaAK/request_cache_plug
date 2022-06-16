@@ -17,16 +17,19 @@ defmodule RequestCache.PlugTest do
     setup do
       config = RequestCache.Util.merge_default_opts([cache: FailingCacheModule])
 
-      conn = %Plug.Conn{method: "GET"}
-      |> Plug.Conn.put_private(RequestCache.Config.conn_private_key(), request: config)
+      conn = Plug.Conn.put_private(
+        %Plug.Conn{method: "GET"},
+        RequestCache.Config.conn_private_key(),
+        request: config
+      )
 
       %{conn: conn}
     end
 
     test "it handles errors from the cache implementation on GraphQL endpoints", %{conn: conn} do
       conn = conn
-      |> Map.put(:request_path, "/graphql")
-      |> Map.put(:query_string, "?query=query MyQuery{myQuery{}}")
+        |> Map.put(:request_path, "/graphql")
+        |> Map.put(:query_string, "?query=query MyQuery{myQuery{}}")
 
       error = capture_log(fn ->
         assert %Plug.Conn{} = RequestCache.Plug.call(conn, nil)
@@ -37,8 +40,8 @@ defmodule RequestCache.PlugTest do
 
     test "it handles errors from the cache implementation on REST endpoints", %{conn: conn} do
       conn = conn
-      |> Map.put(:request_path, "/my/object/1")
-      |> Map.put(:query_string, "?page=1")
+        |> Map.put(:request_path, "/my/object/1")
+        |> Map.put(:query_string, "?page=1")
 
       error = capture_log(fn ->
         assert %Plug.Conn{} = RequestCache.Plug.call(conn, nil)

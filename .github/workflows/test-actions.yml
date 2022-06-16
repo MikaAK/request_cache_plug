@@ -1,9 +1,9 @@
 name: Test
 
-on: [push, pull_request]
+on: [push]
 
 jobs:
-  Test:
+  Build:
     runs-on: ubuntu-latest
 
     container:
@@ -14,25 +14,116 @@ jobs:
     steps:
       - uses: actions/checkout@v2
 
-      - name: Install Rebar & Hex
-        run: mix local.hex --force --if-missing && mix local.rebar --force --if-missing
-
-      - name: Install Tar
-        run: apk add --no-cache tar
-
       - name: Cache Deps & Build
         uses: actions/cache@v2
         with:
-          key: ${{github.ref}}-deps-build-cache
+          key: ${{github.ref}}-deps-build-cache-${{hashFiles('./mix.lock')}}
           path: |
+            /github/home/.mix
             ./deps
             ./_build
-            !._build/dev/lib/error_message/
+
+      - name: Install Rebar & Hex
+        run: mix local.hex --force --if-missing && mix local.rebar --force --if-missing
+
       - name: Install Dependencies
         run: mix deps.get
 
       - name: Compile Project
-        run: mix compile
+        run: mix compile --warnings-as-errors
+
+  Test:
+    runs-on: ubuntu-latest
+
+    needs: [Build]
+
+    container:
+      image: mikaak/elixir:1.13-alpine
+      env:
+        MIX_ENV: test
+
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Cache Deps & Build
+        uses: actions/cache@v2
+        with:
+          key: ${{github.ref}}-deps-build-cache-${{hashFiles('./mix.lock')}}
+          path: |
+            /github/home/.mix
+            ./deps
+            ./_build
+
+      - name: Install Rebar & Hex
+        run: mix local.hex --force --if-missing && mix local.rebar --force --if-missing
+
+      - name: Install Dependencies
+        run: mix deps.get
 
       - name: Run Tests
         run: mix test
+
+  Credo:
+    runs-on: ubuntu-latest
+
+    needs: [Build]
+
+    container:
+      image: mikaak/elixir:1.13-alpine
+      env:
+        MIX_ENV: test
+
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Cache Deps & Build
+        uses: actions/cache@v2
+        with:
+          key: ${{github.ref}}-deps-build-cache-${{hashFiles('./mix.lock')}}
+          path: |
+            /github/home/.mix
+            ./deps
+            ./_build
+
+      - name: Install Rebar & Hex
+        run: mix local.hex --force --if-missing && mix local.rebar --force --if-missing
+
+      - name: Install Dependencies
+        run: mix deps.get
+
+      - name: Run Credo
+        run: mix credo
+
+  Coverage:
+    runs-on: ubuntu-latest
+
+    needs: [Build]
+
+    container:
+      image: mikaak/elixir:1.13-alpine
+      env:
+        MIX_ENV: test
+
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Cache Deps & Build
+        uses: actions/cache@v2
+        with:
+          key: ${{github.ref}}-deps-build-cache-${{hashFiles('./mix.lock')}}
+          path: |
+            /github/home/.mix
+            ./deps
+            ./_build
+
+      - name: Install Rebar & Hex
+        run: mix local.hex --force --if-missing && mix local.rebar --force --if-missing
+
+      - name: Install Dependencies
+        run: mix deps.get
+
+      - name: Run Coveralls
+        run: mix coveralls.json && bash <(curl -s https://codecov.io/bash)
+
+      - name: Upload to codecov.io
+        uses: codecov/codecov-action@v1

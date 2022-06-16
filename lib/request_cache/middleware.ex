@@ -1,4 +1,6 @@
-if RequestCache.Application.dependency_found?(:absinthe) and RequestCache.Application.dependency_found?(:absinthe_plug) do
+absinthe_loaded? = RequestCache.Application.dependency_found?(:absinthe) and
+                    RequestCache.Application.dependency_found?(:absinthe_plug)
+if absinthe_loaded? do
   defmodule RequestCache.Middleware do
     alias RequestCache.Util
 
