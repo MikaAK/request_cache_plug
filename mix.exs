@@ -11,8 +11,15 @@ defmodule RequestCache.MixProject do
       elixirc_paths: elixirc_paths(Mix.env()),
       deps: deps(),
       docs: docs(),
-      package: package()
-    ]
+      package: package(),
+      test_coverage: [tool: ExCoveralls],
+        preferred_cli_env: [
+          coveralls: :test,
+          "coveralls.detail": :test,
+          "coveralls.post": :test,
+          "coveralls.html": :test
+        ]
+      ]
   end
 
   # Run "mix help compile.app" to learn about applications.
@@ -37,6 +44,7 @@ defmodule RequestCache.MixProject do
       {:telemetry, "~> 1.1"},
       {:telemetry_metrics, "~> 0.6.1"},
 
+      {:excoveralls, "~> 0.10", only: :test},
       {:credo, "~> 1.6", only: [:test, :dev], runtime: false},
       {:blitz_credo_checks, "~> 0.1", only: [:test, :dev], runtime: false}
     ]

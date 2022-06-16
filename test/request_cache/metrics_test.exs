@@ -5,7 +5,7 @@ defmodule RequestCache.TelemetryMetricsTest do
 
   alias RequestCache.Support.Utils
 
-  @expected_ttl 3600000
+  @expected_ttl 3_600_000
   @expected_measurements %{count: 1}
   @expected_rest_cache_hit_event_name [:request_cache_plug, :rest, :cache_hit]
   @expected_rest_cache_miss_event_name [:request_cache_plug, :rest, :cache_miss]
@@ -44,8 +44,8 @@ defmodule RequestCache.TelemetryMetricsTest do
       request = RequestCache.Util.merge_default_opts(labels: [:graphql, :test_endpoint])
 
       conn
-      |> Plug.Conn.put_private(RequestCache.Config.conn_private_key(), request: request)
-      |> RequestCache.Plug.call(%{})
+        |> Plug.Conn.put_private(RequestCache.Config.conn_private_key(), request: request)
+        |> RequestCache.Plug.call(%{})
 
       assert_receive {:telemetry_event, @expected_graphql_cache_miss_event_name,
                       @expected_measurements, @expected_cache_miss_metadata}
@@ -55,8 +55,7 @@ defmodule RequestCache.TelemetryMetricsTest do
   describe "GraphQL RequestCache.Plug.call/2 cache hit" do
 
     setup do
-      conn = Utils.graphql_conn()
-      |> Map.put(:query_string, "?query=query all")
+      conn = Map.put(Utils.graphql_conn(), :query_string, "?query=query all")
 
       RequestCache.ConCacheStore.put(
         nil,
@@ -83,8 +82,8 @@ defmodule RequestCache.TelemetryMetricsTest do
       request = RequestCache.Util.merge_default_opts(labels: [:graphql, :test_endpoint])
 
       conn
-      |> Plug.Conn.put_private(RequestCache.Config.conn_private_key(), request: request)
-      |> RequestCache.Plug.call(%{})
+        |> Plug.Conn.put_private(RequestCache.Config.conn_private_key(), request: request)
+        |> RequestCache.Plug.call(%{})
 
       assert_receive {:telemetry_event, @expected_graphql_cache_hit_event_name,
         @expected_measurements, @expected_cache_hit_metadata}
@@ -96,8 +95,8 @@ defmodule RequestCache.TelemetryMetricsTest do
       start_telemetry_listener(parent_pid, test, @expected_rest_cache_miss_event_name)
 
       Utils.rest_conn()
-      |> Map.put(:query_string, "?page=1")
-      |> RequestCache.Plug.call(%{})
+        |> Map.put(:query_string, "?page=1")
+        |> RequestCache.Plug.call(%{})
 
       assert_receive {:telemetry_event, @expected_rest_cache_miss_event_name,
                       @expected_measurements, _metadata}
@@ -114,8 +113,8 @@ defmodule RequestCache.TelemetryMetricsTest do
       start_telemetry_listener(parent_pid, test, @expected_rest_cache_hit_event_name)
 
       Utils.rest_conn()
-      |> Map.put(:query_string, "?page=2")
-      |> RequestCache.Plug.call(%{})
+        |> Map.put(:query_string, "?page=2")
+        |> RequestCache.Plug.call(%{})
 
       assert_receive {:telemetry_event, @expected_rest_cache_hit_event_name,
                       @expected_measurements, _metadata}
@@ -125,37 +124,37 @@ defmodule RequestCache.TelemetryMetricsTest do
   describe "metrics/0" do
     test "metric definitions are correct" do
       assert [
-               %Telemetry.Metrics.Counter{
-                 description: "Cache hits on GraphQL endpoints",
-                 event_name: @expected_graphql_cache_hit_event_name,
-                 measurement: :count,
-                 name: @expected_graphql_cache_hit_event_name ++ [:total]
-               },
-               %Telemetry.Metrics.Counter{
-                 description: "Cache misses on GraphQL endpoints",
-                 event_name: @expected_graphql_cache_miss_event_name,
-                 measurement: :count,
-                 name: @expected_graphql_cache_miss_event_name ++ [:total]
-               },
-               %Telemetry.Metrics.Counter{
-                 description: "Cache hits on REST endpoints",
-                 event_name: @expected_rest_cache_hit_event_name,
-                 measurement: :count,
-                 name: @expected_rest_cache_hit_event_name ++ [:total]
-               },
-               %Telemetry.Metrics.Counter{
-                 description: "Cache misses on REST endpoints",
-                 event_name: @expected_rest_cache_miss_event_name,
-                 measurement: :count,
-                 name: @expected_rest_cache_miss_event_name ++ [:total]
-               },
-               %Telemetry.Metrics.Counter{
-                 description: "Cache puts",
-                 event_name: @expected_cache_put_event_name,
-                 measurement: :count,
-                 name: @expected_cache_put_event_name ++ [:total]
-               }
-             ] = RequestCache.Metrics.metrics()
+        %Telemetry.Metrics.Counter{
+          description: "Cache hits on GraphQL endpoints",
+          event_name: @expected_graphql_cache_hit_event_name,
+          measurement: :count,
+          name: @expected_graphql_cache_hit_event_name ++ [:total]
+        },
+        %Telemetry.Metrics.Counter{
+          description: "Cache misses on GraphQL endpoints",
+          event_name: @expected_graphql_cache_miss_event_name,
+          measurement: :count,
+          name: @expected_graphql_cache_miss_event_name ++ [:total]
+        },
+        %Telemetry.Metrics.Counter{
+          description: "Cache hits on REST endpoints",
+          event_name: @expected_rest_cache_hit_event_name,
+          measurement: :count,
+          name: @expected_rest_cache_hit_event_name ++ [:total]
+        },
+        %Telemetry.Metrics.Counter{
+          description: "Cache misses on REST endpoints",
+          event_name: @expected_rest_cache_miss_event_name,
+          measurement: :count,
+          name: @expected_rest_cache_miss_event_name ++ [:total]
+        },
+        %Telemetry.Metrics.Counter{
+          description: "Cache puts",
+          event_name: @expected_cache_put_event_name,
+          measurement: :count,
+          name: @expected_cache_put_event_name ++ [:total]
+        }
+      ] = RequestCache.Metrics.metrics()
     end
   end
 

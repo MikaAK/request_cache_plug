@@ -1,6 +1,7 @@
 ## RequestCache
 
-[![Test/Credo](https://github.com/MikaAK/request_cache_plug/actions/workflows/test-actions.yml/badge.svg)](https://github.com/MikaAK/request_cache_plug/actions/workflows/test-actions.yml)
+[![Test](https://github.com/MikaAK/request_cache_plug/actions/workflows/test-actions.yml/badge.svg)](https://github.com/MikaAK/request_cache_plug/actions/workflows/test-actions.yml)
+[![codecov](https://codecov.io/gh/MikaAK/request_cache_plug/branch/main/graph/badge.svg?token=RF4ASVG5PV)](https://codecov.io/gh/MikaAK/request_cache_plug)
 [![Hex version badge](https://img.shields.io/hexpm/v/request_cache_plug.svg)](https://hex.pm/packages/request_cache_plug)
 
 This plug allows us to cache our graphql queries and phoenix controller requests declaritevly
@@ -180,10 +181,10 @@ end
 The events will look like this:
 
 ```elixir
-{ 
-  [:request_cache_plug, :graphql, :cache_hit], 
-  %{count: 1}, 
-  %{ttl: 3600000, cache_key: "/graphql:NNNN", labels: [:service, :endpoint]} 
+{
+  [:request_cache_plug, :graphql, :cache_hit],
+  %{count: 1},
+  %{ttl: 3600000, cache_key: "/graphql:NNNN", labels: [:service, :endpoint]}
 }
 ```
 
@@ -194,7 +195,7 @@ The events will look like this:
 - If no ConCache is found, you must set `config :request_cache_module` to something else
 
 ### Caching Header
-When an item is served from the cache, we return a header `rc-cache-status` which has a value of `HIT`. Using this you can tell if the item was 
+When an item is served from the cache, we return a header `rc-cache-status` which has a value of `HIT`. Using this you can tell if the item was
 served out of cache, without it the item was fetched
 
 ### Example Reduction
