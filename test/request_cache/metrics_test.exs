@@ -128,31 +128,36 @@ defmodule RequestCache.TelemetryMetricsTest do
           description: "Cache hits on GraphQL endpoints",
           event_name: @expected_graphql_cache_hit_event_name,
           measurement: :count,
-          name: @expected_graphql_cache_hit_event_name ++ [:total]
+          name: @expected_graphql_cache_hit_event_name ++ [:total],
+          tags: [:labels]
         },
         %Telemetry.Metrics.Counter{
           description: "Cache misses on GraphQL endpoints",
           event_name: @expected_graphql_cache_miss_event_name,
           measurement: :count,
-          name: @expected_graphql_cache_miss_event_name ++ [:total]
+          name: @expected_graphql_cache_miss_event_name ++ [:total],
+          tags: [:labels]
         },
         %Telemetry.Metrics.Counter{
           description: "Cache hits on REST endpoints",
           event_name: @expected_rest_cache_hit_event_name,
           measurement: :count,
-          name: @expected_rest_cache_hit_event_name ++ [:total]
+          name: @expected_rest_cache_hit_event_name ++ [:total],
+          tags: [:labels]
         },
         %Telemetry.Metrics.Counter{
           description: "Cache misses on REST endpoints",
           event_name: @expected_rest_cache_miss_event_name,
           measurement: :count,
-          name: @expected_rest_cache_miss_event_name ++ [:total]
+          name: @expected_rest_cache_miss_event_name ++ [:total],
+          tags: [:labels]
         },
         %Telemetry.Metrics.Counter{
           description: "Cache puts",
           event_name: @expected_cache_put_event_name,
           measurement: :count,
-          name: @expected_cache_put_event_name ++ [:total]
+          name: @expected_cache_put_event_name ++ [:total],
+          tags: [:labels]
         }
       ] = RequestCache.Metrics.metrics()
     end
