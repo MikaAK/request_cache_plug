@@ -19,31 +19,36 @@ defmodule RequestCache.Metrics do
         counter_event_name(@graphql_cache_hit),
         event_name: @graphql_cache_hit,
         description: "Cache hits on GraphQL endpoints",
-        measurement: :count
+        measurement: :count,
+        tags: [:labels]
       ),
       counter(
         counter_event_name(@graphql_cache_miss),
         event_name: @graphql_cache_miss,
         description: "Cache misses on GraphQL endpoints",
-        measurement: :count
+        measurement: :count,
+        tags: [:labels]
       ),
       counter(
         counter_event_name(@rest_cache_hit),
         event_name: @rest_cache_hit,
         description: "Cache hits on REST endpoints",
-        measurement: :count
+        measurement: :count,
+        tags: [:labels]
       ),
       counter(
         counter_event_name(@rest_cache_miss),
         event_name: @rest_cache_miss,
         description: "Cache misses on REST endpoints",
-        measurement: :count
+        measurement: :count,
+        tags: [:labels]
       ),
       counter(
         counter_event_name(@cache_put),
         event_name: @cache_put,
         description: "Cache puts",
-        measurement: :count
+        measurement: :count,
+        tags: [:labels]
       )
     ]
   end
