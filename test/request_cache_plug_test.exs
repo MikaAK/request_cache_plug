@@ -106,9 +106,10 @@ defmodule RequestCachePlugTest do
   test "includes proper headers with when served from the cache", %{
     caller_pid: pid
   } do
+    route = "/my_route/:param"
     assert %Plug.Conn{resp_headers: uncached_headers} =
              :get
-             |> conn("/my_route")
+             |> conn(route)
              |> RequestCache.Support.Utils.ensure_default_opts()
              |> put_private(:call_pid, pid)
              |> Router.call([])
@@ -119,7 +120,7 @@ defmodule RequestCachePlugTest do
 
     assert %Plug.Conn{resp_headers: resp_headers} =
              :get
-             |> conn("/my_route")
+             |> conn(route)
              |> RequestCache.Support.Utils.ensure_default_opts()
              |> put_private(:call_pid, pid)
              |> Router.call([])
