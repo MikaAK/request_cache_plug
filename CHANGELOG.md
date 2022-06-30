@@ -1,3 +1,6 @@
+# 0.2.1
+- Tags can now include labels for metrics
+
 # 0.2.0
 - Add header to signify request cache is running
 
