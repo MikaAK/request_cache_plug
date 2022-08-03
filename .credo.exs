@@ -64,8 +64,8 @@ allowed_imports = [
         {Credo.Check.Design.AliasUsage, false},
 
         # No outstanding TODOs
-        {Credo.Check.Design.TagTODO, []},
-        {Credo.Check.Design.TagFIXME, []},
+        {Credo.Check.Design.TagTODO, false},
+        {Credo.Check.Design.TagFIXME, false},
 
         # # Readability Checks
         {Credo.Check.Readability.AliasOrder, false},
