@@ -34,4 +34,6 @@ cond do
 
   RequestCache.Config.request_cache_module() === RequestCache.ConCacheStore ->
     raise "Default cache is still set to RequestCache.ConCacheStore but ConCache isn't a dependency of this application\n\nEither configure a new :request_cache_module for :request_cache or add con_cache to your list of dependencies"
+
+  true -> :another_module_used
 end
