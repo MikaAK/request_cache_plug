@@ -19,7 +19,7 @@ This  package can be installed by adding `request_cache_plug` to your list of de
 ```elixir
 def deps do
   [
-    {:request_cache_plug, "~> 0.1.0"}
+    {:request_cache_plug, "~> 0.2.1"}
   ]
 end
 ```
@@ -97,7 +97,7 @@ end
 ### Specifying Specific Caching Locations
 We have a few ways to control the caching location of our RequestCache, by default if you have `con_cache` installed,
 we have access to `RequestCache.ConCacheStore` which is the default setting
-However we can override this by setting `config :request_cache, :request_cache_module, MyCustomCache`
+However we can override this by setting `config :request_cache_plug, :request_cache_module, MyCustomCache`
 
 Caching module will be expected to have the following API:
 ```elixir
