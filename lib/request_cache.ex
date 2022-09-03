@@ -6,7 +6,7 @@ defmodule RequestCache do
   @type opts :: [ttl: pos_integer, cache: module]
 
   @spec store(conn :: Plug.Conn.t, opts_or_ttl :: opts | pos_integer) :: Plug.Conn.t
-  def store(%Plug.Conn{} = conn, opts_or_ttl) do
+  def store(%Plug.Conn{} = conn, opts_or_ttl \\ []) do
     if RequestCache.Config.enabled?() do
       RequestCache.Plug.store_request(conn, opts_or_ttl)
     else

@@ -61,6 +61,22 @@ defmodule RequestCachePlugTest do
     end
   end
 
+  defmodule RouterWithBreakingPlugDefaultTTL do
+    use Plug.Router
+
+    plug RequestCache.Plug
+    plug RequestCachePlugTest.EnsureCalledOnlyOncePlug
+
+    plug :match
+    plug :dispatch
+
+    match "/my_route_default_ttl" do
+      conn
+      |> RequestCache.store()
+      |> send_resp(200, Jason.encode!(%{test: Enum.random(1..100_000_000)}))
+    end
+  end
+
   defmodule RouterWithoutPlug do
     use Plug.Router
 
@@ -92,6 +108,20 @@ defmodule RequestCachePlugTest do
       |> RequestCache.Support.Utils.ensure_default_opts()
       |> put_private(:call_pid, pid)
       |> RouterWithBreakingPlug.call([])
+  end
+
+  test "stops any plug from running if cache using default ttl is found", %{caller_pid: pid} do
+    assert %Plug.Conn{} = :get
+      |> conn("/my_route_default_ttl")
+      |> RequestCache.Support.Utils.ensure_default_opts()
+      |> put_private(:call_pid, pid)
+      |> RouterWithBreakingPlugDefaultTTL.call([])
+
+    assert %Plug.Conn{} = :get
+      |> conn("/my_route_default_ttl")
+      |> RequestCache.Support.Utils.ensure_default_opts()
+      |> put_private(:call_pid, pid)
+      |> RouterWithBreakingPlugDefaultTTL.call([])
   end
 
   test "throws an error if router doesn't have RequestCache.Plug", %{caller_pid: pid} do
