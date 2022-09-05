@@ -1,6 +1,6 @@
 import Config
 
-config :request_cache,
+config :request_cache_plug,
   enabled?: true,
   verbose?: false,
   graphql_paths: ["/graphiql", "/graphql"],
