@@ -19,7 +19,7 @@ This  package can be installed by adding `request_cache_plug` to your list of de
 ```elixir
 def deps do
   [
-    {:request_cache_plug, "~> 0.2.1"}
+    {:request_cache_plug, "~> 0.2"}
   ]
 end
 ```
