@@ -17,8 +17,8 @@ defmodule RequestCache.TelemetryMetricsTest do
   @miss_cache_key "/graphql:BE1120D4C931B50910C1B8788FA21108"
   @hit_cache_key "/graphql:14BFE314D845C31342E288408A7DACE4"
 
-  @expected_cache_miss_metadata %{ttl: @expected_ttl, cache_key: @miss_cache_key, labels: [:graphql, :test_endpoint]}
-  @expected_cache_hit_metadata %{ttl: @expected_ttl, cache_key: @hit_cache_key, labels: [:graphql, :test_endpoint]}
+  @expected_cache_miss_metadata %{ttl: @expected_ttl, cache_key: @miss_cache_key, labels: [:test_endpoint]}
+  @expected_cache_hit_metadata %{ttl: @expected_ttl, cache_key: @hit_cache_key, labels: [:test_endpoint]}
 
   setup do: %{parent_pid: self()}
 
@@ -41,11 +41,12 @@ defmodule RequestCache.TelemetryMetricsTest do
     test "cache miss with labels", %{parent_pid: parent_pid, test: test, conn: conn} do
       start_telemetry_listener(parent_pid, test, @expected_graphql_cache_miss_event_name)
 
-      request = RequestCache.Util.merge_default_opts(labels: [:graphql, :test_endpoint])
+      request = RequestCache.Util.merge_default_opts([])
 
       conn
-        |> Plug.Conn.put_private(RequestCache.Config.conn_private_key(), request: request)
-        |> RequestCache.Plug.call(%{})
+      |> put_query_params()
+      |> Plug.Conn.put_private(RequestCache.Config.conn_private_key(), request: request)
+      |> RequestCache.Plug.call(%{})
 
       assert_receive {:telemetry_event, @expected_graphql_cache_miss_event_name,
                       @expected_measurements, @expected_cache_miss_metadata}
@@ -79,11 +80,12 @@ defmodule RequestCache.TelemetryMetricsTest do
     test "cache hit with labels", %{parent_pid: parent_pid, test: test, conn: conn} do
       start_telemetry_listener(parent_pid, test, @expected_graphql_cache_hit_event_name)
 
-      request = RequestCache.Util.merge_default_opts(labels: [:graphql, :test_endpoint])
+      request = RequestCache.Util.merge_default_opts([])
 
       conn
-        |> Plug.Conn.put_private(RequestCache.Config.conn_private_key(), request: request)
-        |> RequestCache.Plug.call(%{})
+      |> put_query_params()
+      |> Plug.Conn.put_private(RequestCache.Config.conn_private_key(), request: request)
+      |> RequestCache.Plug.call(%{})
 
       assert_receive {:telemetry_event, @expected_graphql_cache_hit_event_name,
         @expected_measurements, @expected_cache_hit_metadata}
@@ -177,4 +179,6 @@ defmodule RequestCache.TelemetryMetricsTest do
       send(parent_pid, {:telemetry_event, name, measurements, metadata})
     end
   end
+
+  defp put_query_params(conn), do: Map.put(conn, :query_params, %{"query" => "query TestEndpoint {allAlerts {alertDetails {message}}}", "variables" => nil})
 end

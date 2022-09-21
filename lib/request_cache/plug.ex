@@ -45,7 +45,7 @@ defmodule RequestCache.Plug do
 
     case request_cache_module(conn).get(cache_key) do
       {:ok, nil} ->
-        Metrics.inc_rest_cache_miss(%{cache_key: cache_key})
+        Metrics.inc_rest_cache_miss(rest_event_metadata(conn, cache_key))
         Util.verbose_log("[RequestCache.Plug] REST enabling cache for conn and will cache if set")
 
         conn
@@ -53,7 +53,7 @@ defmodule RequestCache.Plug do
         |> cache_before_send_if_requested(cache_key)
 
       {:ok, cached_result} ->
-        Metrics.inc_rest_cache_hit(%{cache_key: cache_key})
+        Metrics.inc_rest_cache_hit(rest_event_metadata(conn, cache_key))
         Util.verbose_log("[RequestCache.Plug] Returning cached result for #{cache_key}")
 
         halt_and_return_result(conn, cached_result)
@@ -72,14 +72,14 @@ defmodule RequestCache.Plug do
 
     case request_cache_module(conn).get(cache_key) do
       {:ok, nil} ->
-        Metrics.inc_graphql_cache_miss(event_metadata(conn, cache_key))
+        Metrics.inc_graphql_cache_miss(gql_event_metadata(conn, cache_key))
 
         conn
         |> enable_request_cache_for_conn
         |> cache_before_send_if_requested(cache_key)
 
       {:ok, cached_result} ->
-        Metrics.inc_graphql_cache_hit(event_metadata(conn, cache_key))
+        Metrics.inc_graphql_cache_hit(gql_event_metadata(conn, cache_key))
         Util.verbose_log("[RequestCache.Plug] Returning cached result for #{cache_key}")
 
         halt_and_return_result(conn, cached_result)
@@ -122,13 +122,25 @@ defmodule RequestCache.Plug do
     end)
   end
 
-  @spec event_metadata(Plug.Conn.t(), String.t()) :: map()
   defp event_metadata(conn, cache_key) do
     %{
       cache_key: cache_key,
-      labels: request_cache_labels(conn),
       ttl: request_cache_ttl(conn)
     }
+  end
+
+  defp gql_event_metadata(conn, cache_key) do
+    event_metadata = event_metadata(conn, cache_key)
+    labels = %{labels: request_cache_gql_labels(conn)}
+
+    Map.merge(event_metadata, labels)
+  end
+
+  defp rest_event_metadata(conn, cache_key) do
+    event_metadata = event_metadata(conn, cache_key)
+    labels = %{labels: request_cache_rest_labels(conn)}
+
+    Map.merge(event_metadata, labels)
   end
 
   defp request_cache_module(conn) do
@@ -139,8 +151,22 @@ defmodule RequestCache.Plug do
     conn_request(conn)[:ttl]
   end
 
-  defp request_cache_labels(conn) do
-    conn_request(conn)[:labels]
+  defp request_cache_gql_labels(conn) do
+    with {:ok, query, _variables} <- Util.fetch_query(conn),
+         {:ok, query_name} <- Util.extract_query_name(query) do
+      query_name
+      |> Macro.underscore()
+      |> String.to_atom()
+      |> List.wrap()
+    else
+      {:error, :query_not_found} -> [:query_not_found]
+      {:error, :query_name_not_found} -> [:query_name_not_found]
+      mismatch -> [:unknown_error, mismatch]
+    end
+  end
+
+  defp request_cache_rest_labels(%{path_info: path_info}) do
+    Enum.map(path_info, &String.to_atom(&1))
   end
 
   defp enabled_for_request?(conn) do
