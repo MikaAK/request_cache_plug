@@ -3,10 +3,46 @@ defmodule RequestCache.Util do
 
   @moduledoc false
 
-  def parse_gql_name(query_string) do
+  @doc """
+  Extracts the query and variables query parameters from the given Plug.Conn
+
+        iex> {:error, :query_not_found} = RequestCache.Util.fetch_query(%Plug.Conn{query_params: nil})
+
+        iex> {:ok, "testQuery", nil} = RequestCache.Util.fetch_query(%Plug.Conn{query_params: %{"query" => "testQuery"}})
+
+        iex> {:ok, "testQuery", "one=one"} = RequestCache.Util.fetch_query(%Plug.Conn{query_params: %{"query" => "testQuery", "variables" => "one=one"}})
+
+        iex> {:ok, "query Testing {allAlerts {alertDetails {message}}}", nil} = RequestCache.Util.fetch_query(%Plug.Conn{query_params: %{"query" => "query Testing {allAlerts {alertDetails {message}}}", "variables" => nil}})
+  """
+  @spec fetch_query(%Plug.Conn{}) :: {:ok, String.t(), String.t()} | {:query_not_found}
+  def fetch_query(conn) do
+    case Plug.Conn.fetch_query_params(conn) do
+      %{query_params: %{"query" => query, "variables" => variables}} ->
+        {:ok, query, variables}
+
+      %{query_params: %{"query" => query}} ->
+        {:ok, query, nil}
+
+      _ ->
+        {:error, :query_not_found}
+    end
+  end
+
+  @doc """
+  Extracts the GQL query name from the query.
+
+        iex> {:error, :query_name_not_found} = RequestCache.Util.extract_query_name("query")
+
+        iex> {:ok, "Testing"} = RequestCache.Util.extract_query_name("query Testing {allAlerts {alertDetails {message}}}")
+  """
+  @spec extract_query_name(String.t()) :: {:ok, String.t()} | {:query_name_not_found}
+  def extract_query_name(query_string) do
     case Regex.run(~r/^(?:query) ([^\({]+(?=\(|{))/, query_string, capture: :all_but_first) do
-      [query_name] -> String.trim(query_name)
-      _ -> nil
+      [query_name] ->
+        {:ok, String.trim(query_name)}
+
+      _ ->
+        {:error, :query_name_not_found}
     end
   end
 

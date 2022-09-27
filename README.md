@@ -61,7 +61,7 @@ We also need to setup a before_send hook to our absinthe_plug (if not using absi
 ```elixir
 plug Absinthe.Plug, before_send: {RequestCache, :connect_absinthe_context_to_conn}
 ```
-What this does is allow us to see the results of items we put onto our request context from within plugs coming after absinthe
+This allows us to see the results of items we put onto our request context from within plugs coming after absinthe
 
 After that we can utilize our cache in a few ways
 
@@ -164,7 +164,7 @@ For GraphQL endpoints it is possible to provide a list of atoms that will be pas
 field :user, :user do
   arg :id, non_null(:id)
 
-  middleware RequestCache.Middleware, ttl: :timer.seconds(60), cache: MyCacheModule, labels: [:service, :endpoint]
+  middleware RequestCache.Middleware, ttl: :timer.seconds(60), cache: MyCacheModule
 
   resolve &Resolvers.User.find/2
 end
@@ -174,7 +174,7 @@ end
 
 ```elixir
 def all(params, resolution) do
-  RequestCache.store(value, ttl: :timer.seconds(60), cache: MyCacheModule, labels: [:service, :endpoint])
+  RequestCache.store(value, ttl: :timer.seconds(60), cache: MyCacheModule)
 end
 ```
 
@@ -184,7 +184,7 @@ The events will look like this:
 {
   [:request_cache_plug, :graphql, :cache_hit],
   %{count: 1},
-  %{ttl: 3600000, cache_key: "/graphql:NNNN", labels: [:service, :endpoint]}
+  %{ttl: 3600000, cache_key: "/graphql:NNNN", labels: [:query_name]}
 }
 ```
 
