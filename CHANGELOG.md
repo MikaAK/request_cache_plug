@@ -1,4 +1,7 @@
 # 0.2.1
+- You can now provide `ttl` and `cache` settings to the plug directly
+
+# 0.2.1
 - Tags can now include labels for metrics
 
 # 0.2.0
