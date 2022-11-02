@@ -138,7 +138,7 @@ defmodule RequestCache.Plug do
   end
 
   defp request_cache_ttl(conn, opts) do
-    conn_request(conn)[:ttl] || opts[:ttl]
+    conn_request(conn)[:ttl] || opts[:ttl] || RequestCache.Config.default_ttl()
   end
 
   defp request_cache_labels(conn) do
@@ -173,7 +173,7 @@ defmodule RequestCache.Plug do
     if conn.private[conn_private_key()][:enabled?] do
       Plug.Conn.put_private(conn, conn_private_key(),
         enabled?: true,
-        request: Util.merge_default_opts(opts)
+        request: opts
       )
     else
       Util.log_cache_disabled_message()
@@ -186,7 +186,7 @@ defmodule RequestCache.Plug do
     if conn.private[conn_private_key()][:enabled?] do
       Plug.Conn.put_private(conn, conn_private_key(),
         enabled?: true,
-        request: [ttl: ttl, cache: RequestCache.Config.request_cache_module()]
+        request: [ttl: ttl]
       )
     else
       Util.log_cache_disabled_message()

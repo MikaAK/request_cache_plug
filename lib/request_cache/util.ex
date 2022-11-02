@@ -10,13 +10,6 @@ defmodule RequestCache.Util do
     end
   end
 
-  def merge_default_opts(opts) do
-    Keyword.merge([
-      ttl: RequestCache.Config.default_ttl(),
-      cache: RequestCache.Config.request_cache_module()
-    ], opts)
-  end
-
   def create_key(url_path, query_string) do
     "#{url_path}:#{hash_string(query_string)}"
   end

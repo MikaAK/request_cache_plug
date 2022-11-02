@@ -18,7 +18,7 @@ if absinthe_loaded? do
 
     defp enable_cache_for_resolution(resolution, opts) do
       if resolution.context[RequestCache.Config.conn_private_key()][:enabled?] do
-        config = [request: opts |> Util.merge_default_opts |> Keyword.delete(:value)]
+        config = [request: Keyword.delete(opts, :value)]
 
         resolution = %{resolution |
           state: :resolved,

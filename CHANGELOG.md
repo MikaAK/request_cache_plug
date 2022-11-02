@@ -1,4 +1,4 @@
-# 0.2.1
+# 0.2.2
 - You can now provide `ttl` and `cache` settings to the plug directly
 
 # 0.2.1

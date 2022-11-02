@@ -27,7 +27,7 @@ if absinthe_loaded? do
           context: Map.update!(
             resolution.context,
             RequestCache.Config.conn_private_key(),
-            &Keyword.put(&1, :request, Util.merge_default_opts(opts))
+            &Keyword.put(&1, :request, opts)
           )
         }
       else
