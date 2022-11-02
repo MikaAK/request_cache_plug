@@ -1,3 +1,6 @@
+# 0.2.3
+- remove all the extra default options merges in order to rely on choice function in plug
+
 # 0.2.2
 - You can now provide `ttl` and `cache` settings to the plug directly
 
