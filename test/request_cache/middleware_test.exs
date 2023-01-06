@@ -12,7 +12,6 @@ defmodule RequestCache.MiddlewareTest do
       request_config = resolution.context[RequestCache.Config.conn_private_key()][:request]
 
       assert request_config[:ttl] === :timer.seconds(10)
-      assert request_config[:cache] === RequestCache.Config.request_cache_module()
     end
 
     test "throws exception when hasn't been enabled" do

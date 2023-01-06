@@ -2,6 +2,7 @@ cond do
   RequestCache.Application.dependency_found?(:con_cache) ->
     defmodule RequestCache.ConCacheStore do
       @moduledoc false
+      @default_name RequestCache.Config.default_concache_opts()[:name]
 
       def start_link(opts \\ []) do
         opts = Keyword.merge(RequestCache.Config.default_concache_opts(), opts)
@@ -11,19 +12,19 @@ cond do
 
       def child_spec(opts) do
         %{
-          id: opts[:name] || :con_cache_request_plug_store,
+          id: opts[:name] || @default_name,
           start: {RequestCache.ConCacheStore, :start_link, [opts]}
         }
       end
 
-      def get(pid \\ nil, key) do
+      def get(pid \\ @default_name, key) do
         {:ok, ConCache.get(
           pid || RequestCache.Config.default_concache_opts()[:name],
           key
         )}
       end
 
-      def put(pid \\ nil, key, ttl, value) do
+      def put(pid \\ @default_name, key, ttl, value) do
         ConCache.put(
           pid || RequestCache.Config.default_concache_opts()[:name],
           key,

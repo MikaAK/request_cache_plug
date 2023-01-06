@@ -15,7 +15,7 @@ defmodule RequestCache.PlugTest do
     @expected_log_content "reason: :timeout"
 
     setup do
-      config = RequestCache.Util.merge_default_opts([cache: FailingCacheModule])
+      config = [cache: FailingCacheModule]
 
       conn = Plug.Conn.put_private(
         %Plug.Conn{method: "GET"},

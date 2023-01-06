@@ -108,14 +108,14 @@ defmodule RequestCacheAbsintheTest do
       |> conn(graphql_url(@query_error))
       |> RequestCache.Support.Utils.ensure_default_opts()
       |> Absinthe.Plug.put_options(context: %{call_pid: pid})
-      |> Router.call([])
+      |> RouterWithoutPlug.call([])
 
     assert_raise Plug.Conn.WrapperError, fn ->
       assert conn.resp_body === :get
         |> conn(graphql_url(@query_error))
         |> RequestCache.Support.Utils.ensure_default_opts()
         |> Absinthe.Plug.put_options(context: %{call_pid: pid})
-        |> Router.call([])
+        |> RouterWithoutPlug.call([])
         |> Map.get(:resp_body)
     end
   end
