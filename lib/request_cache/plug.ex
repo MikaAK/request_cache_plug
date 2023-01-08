@@ -145,11 +145,13 @@ defmodule RequestCache.Plug do
     conn_request(conn)[:labels]
   end
 
-  defp enabled_for_request?(conn) do
-    conn_request(conn) !== []
+  defp enabled_for_request?(%Plug.Conn{private: private}) do
+    get_in(private, [conn_private_key(), :enabled?])
+    || get_in(private, [:absinthe, :context, conn_private_key(), :enabled?])
+    || []
   end
 
-  defp conn_request(%{private: private}) do
+  defp conn_request(%Plug.Conn{private: private}) do
     get_in(private, [conn_private_key(), :request])
     || get_in(private, [:absinthe, :context, conn_private_key(), :request])
     || []
@@ -171,6 +173,8 @@ defmodule RequestCache.Plug do
 
   def store_request(conn, opts) when is_list(opts) do
     if conn.private[conn_private_key()][:enabled?] do
+      Util.verbose_log("[RequestCache.Plug] Storing REST request in #{conn_private_key()}")
+
       Plug.Conn.put_private(conn, conn_private_key(),
         enabled?: true,
         request: opts

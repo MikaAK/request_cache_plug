@@ -41,7 +41,7 @@ defmodule RequestCache.TelemetryMetricsTest do
     test "cache miss with labels", %{parent_pid: parent_pid, test: test, conn: conn} do
       start_telemetry_listener(parent_pid, test, @expected_graphql_cache_miss_event_name)
 
-      request = RequestCache.Util.merge_default_opts(labels: [:graphql, :test_endpoint])
+      request = [labels: [:graphql, :test_endpoint]]
 
       conn
         |> Plug.Conn.put_private(RequestCache.Config.conn_private_key(), request: request)
@@ -79,7 +79,7 @@ defmodule RequestCache.TelemetryMetricsTest do
     test "cache hit with labels", %{parent_pid: parent_pid, test: test, conn: conn} do
       start_telemetry_listener(parent_pid, test, @expected_graphql_cache_hit_event_name)
 
-      request = RequestCache.Util.merge_default_opts(labels: [:graphql, :test_endpoint])
+      request = [labels: [:graphql, :test_endpoint]]
 
       conn
         |> Plug.Conn.put_private(RequestCache.Config.conn_private_key(), request: request)
