@@ -1,3 +1,6 @@
+# 0.2.4
+- Fix issue from defaults
+
 # 0.2.3
 - remove all the extra default options merges in order to rely on choice function in plug
 
