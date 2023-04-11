@@ -4,27 +4,27 @@ defmodule RequestCache.Config do
   @app :request_cache_plug
 
   def verbose? do
-    Application.get_env(@app, :verbose?) || false
+    Application.get_env(@app, :verbose?, false)
   end
 
   def graphql_paths do
-    Application.get_env(@app, :graphql_paths) || ["/graphiql", "/graphql"]
+    Application.get_env(@app, :graphql_paths, ["/graphiql", "/graphql"])
   end
 
   def conn_private_key do
-    Application.get_env(@app, :conn_priv_key) || :__shared_request_cache__
+    Application.get_env(@app, :conn_priv_key, :__shared_request_cache__)
   end
 
   def request_cache_module do
-    Application.get_env(@app, :request_cache_module) || RequestCache.ConCacheStore
+    Application.get_env(@app, :request_cache_module, RequestCache.ConCacheStore)
   end
 
   def default_ttl do
-    Application.get_env(@app, :default_ttl) || :timer.hours(1)
+    Application.get_env(@app, :default_ttl, :timer.hours(1))
   end
 
   def enabled? do
-    Application.get_env(@app, :enabled?) || true
+    Application.get_env(@app, :enabled?, true)
   end
 
   def default_concache_opts do
