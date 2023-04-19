@@ -12,7 +12,7 @@ defmodule RequestCache.PlugTest do
   end
 
   describe "call/2" do
-    @expected_log_content "reason: :timeout"
+    @expected_log_content "recieved an error from RequestCache.PlugTest.FailingCacheModule"
 
     setup do
       config = [cache: FailingCacheModule]
