@@ -59,7 +59,7 @@ defmodule RequestCache.Plug do
         halt_and_return_result(conn, cached_result)
 
       {:error, e} ->
-        Logger.error("[RequestCache.Plug] #{inspect(e)}")
+        log_error(e, conn, opts)
 
         enable_request_cache_for_conn(conn)
     end
@@ -85,7 +85,7 @@ defmodule RequestCache.Plug do
         halt_and_return_result(conn, cached_result)
 
       {:error, e} ->
-        Logger.error("[RequestCache.Plug] #{inspect(e)}")
+        log_error(e, conn, opts)
 
         enable_request_cache_for_conn(conn)
     end
@@ -201,5 +201,14 @@ defmodule RequestCache.Plug do
 
   defp conn_private_key do
     RequestCache.Config.conn_private_key()
+  end
+
+  defp log_error(error, conn, opts) do
+    {:current_stacktrace, stacktrace} = Process.info(self(), :current_stacktrace)
+
+    Logger.error(
+      "[RequestCache.Plug] recieved an error from #{inspect(request_cache_module(conn, opts))}",
+      [crash_reason: {error, stacktrace}]
+    )
   end
 end
