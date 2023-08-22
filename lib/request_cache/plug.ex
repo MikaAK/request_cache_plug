@@ -16,6 +16,8 @@ defmodule RequestCache.Plug do
   # This is compile time so we can check quicker
   @graphql_paths RequestCache.Config.graphql_paths()
   @request_cache_header "rc-cache-status"
+  @json_regex ~r/^(\[|\{)(.*|\n)*(\]|\})$/
+  @html_regex ~r/<!DOCTYPE\s+html>/i
 
   @impl Plug
   def init(opts), do: opts
@@ -95,8 +97,21 @@ defmodule RequestCache.Plug do
     conn
     |> Plug.Conn.halt()
     |> Plug.Conn.put_resp_header(@request_cache_header, "HIT")
-    |> Plug.Conn.put_resp_content_type("application/json")
+    |> maybe_put_content_type(result)
     |> Plug.Conn.send_resp(200, result)
+  end
+
+  defp maybe_put_content_type(conn, result) do
+    case Plug.Conn.get_resp_header(conn, "content-type") do
+      [_ | _] -> conn
+      [] ->
+        cond do
+          result =~ @json_regex -> Plug.Conn.put_resp_content_type(conn, "application/json")
+          result =~ @html_regex -> Plug.Conn.put_resp_content_type(conn, "text/html")
+
+          true -> conn
+        end
+    end
   end
 
   defp rest_cache_key(%Plug.Conn{request_path: path, query_string: query_string}) do

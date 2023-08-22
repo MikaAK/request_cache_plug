@@ -136,7 +136,7 @@ defmodule RequestCachePlugTest do
   test "includes proper headers with when served from the cache", %{
     caller_pid: pid
   } do
-    route = "/my_route/:param"
+    route = "/my_route/html"
     assert %Plug.Conn{resp_headers: uncached_headers} =
              :get
              |> conn(route)
@@ -159,6 +159,36 @@ defmodule RequestCachePlugTest do
              {"cache-control", "max-age=0, private, must-revalidate"},
              {"rc-cache-status", "HIT"},
              {"content-type", "application/json; charset=utf-8"}
+           ]
+  end
+
+  test "allows for for custom content-type header and returns it when served from the cache", %{
+    caller_pid: pid
+  } do
+    route = "/my_route/:param"
+    assert %Plug.Conn{resp_headers: uncached_headers} =
+             :get
+             |> conn(route)
+             |> RequestCache.Support.Utils.ensure_default_opts()
+             |> put_private(:call_pid, pid)
+             |> Router.call([])
+
+    assert uncached_headers === [
+       {"cache-control", "max-age=0, private, must-revalidate"}
+    ]
+
+    assert %Plug.Conn{resp_headers: resp_headers} =
+             :get
+             |> conn(route)
+             |> RequestCache.Support.Utils.ensure_default_opts()
+             |> put_private(:call_pid, pid)
+             |> put_resp_content_type("text/html")
+             |> Router.call([])
+
+    assert resp_headers === [
+             {"cache-control", "max-age=0, private, must-revalidate"},
+             {"content-type", "text/html; charset=utf-8"},
+             {"rc-cache-status", "HIT"}
            ]
   end
 
