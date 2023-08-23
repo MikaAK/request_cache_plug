@@ -4,7 +4,7 @@ defmodule RequestCache.Config do
   @app :request_cache_plug
 
   def verbose? do
-    !!Application.get_env(@app, :verbose?)
+    !!Application.get_env(@app, :verbose?, false)
   end
 
   def graphql_paths do
@@ -24,7 +24,7 @@ defmodule RequestCache.Config do
   end
 
   def enabled? do
-    !!Application.get_env(@app, :enabled?)
+    !!Application.get_env(@app, :enabled?, true)
   end
 
   def default_concache_opts do
