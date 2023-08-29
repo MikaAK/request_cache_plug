@@ -19,6 +19,8 @@ defmodule RequestCache.Plug do
   @json_regex ~r/^(\[|\{)(.*|\n)*(\]|\})$/
   @html_regex ~r/<!DOCTYPE\s+html>/i
 
+  def request_cache_header, do: @request_cache_header
+
   @impl Plug
   def init(opts), do: opts
 
@@ -161,9 +163,21 @@ defmodule RequestCache.Plug do
   end
 
   defp enabled_for_request?(%Plug.Conn{private: private}) do
-    get_in(private, [conn_private_key(), :enabled?])
-    || get_in(private, [:absinthe, :context, conn_private_key(), :enabled?])
-    || []
+    plug_present? = get_in(private, [conn_private_key(), :enabled?]) ||
+                    get_in(private, [:absinthe, :context, conn_private_key(), :enabled?])
+
+    marked_for_cache? = get_in(private, [conn_private_key(), :cache_request?]) ||
+                        get_in(private, [:absinthe, :context, conn_private_key(), :cache_request?])
+
+    if plug_present? do
+      Util.verbose_log("[RequestCache.Plug] Plug enabled for request")
+    end
+
+    if marked_for_cache? do
+      Util.verbose_log("[RequestCache.Plug] Plug has been marked for cache")
+    end
+
+    plug_present? && marked_for_cache?
   end
 
   defp conn_request(%Plug.Conn{private: private}) do
@@ -191,7 +205,7 @@ defmodule RequestCache.Plug do
       Util.verbose_log("[RequestCache.Plug] Storing REST request in #{conn_private_key()}")
 
       Plug.Conn.put_private(conn, conn_private_key(),
-        enabled?: true,
+        cache_request?: true,
         request: opts
       )
     else
@@ -202,16 +216,7 @@ defmodule RequestCache.Plug do
   end
 
   def store_request(conn, ttl) when is_integer(ttl) do
-    if conn.private[conn_private_key()][:enabled?] do
-      Plug.Conn.put_private(conn, conn_private_key(),
-        enabled?: true,
-        request: [ttl: ttl]
-      )
-    else
-      Util.log_cache_disabled_message()
-
-      conn
-    end
+    store_request(conn, [ttl: ttl])
   end
 
   defp conn_private_key do

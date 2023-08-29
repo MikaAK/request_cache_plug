@@ -14,6 +14,12 @@ defmodule RequestCachePlugTest do
     plug :match
     plug :dispatch
 
+    match "/my_uncached_route" do
+      EnsureCalledOnlyOnce.call(conn.private[:call_pid])
+
+      send_resp(conn, 200, Jason.encode!(%{test: Enum.random(1..100_000_000)}))
+    end
+
     match "/my_route" do
       EnsureCalledOnlyOnce.call(conn.private[:call_pid])
 
@@ -96,6 +102,26 @@ defmodule RequestCachePlugTest do
     %{caller_pid: pid}
   end
 
+  @tag capture_log: true
+  test "does not cache routes that don't ask for caching", %{caller_pid: pid} do
+    assert %Plug.Conn{} = :get
+      |> conn("/my_uncached_route")
+      |> RequestCache.Support.Utils.ensure_default_opts()
+      |> put_private(:call_pid, pid)
+      |> Router.call([])
+
+    assert_raise Plug.Conn.WrapperError, fn ->
+      conn = %Plug.Conn{} = :get
+        |> conn("/my_uncached_route")
+        |> RequestCache.Support.Utils.ensure_default_opts()
+        |> put_private(:call_pid, pid)
+        |> Router.call([])
+
+      assert [] === get_resp_header(conn, RequestCache.Plug.request_cache_header())
+    end
+  end
+
+  @tag capture_log: true
   test "stops any plug from running if cache is found", %{caller_pid: pid} do
     assert %Plug.Conn{} = :get
       |> conn("/my_route")
@@ -110,6 +136,7 @@ defmodule RequestCachePlugTest do
       |> RouterWithBreakingPlug.call([])
   end
 
+  @tag capture_log: true
   test "stops any plug from running if cache using default ttl is found", %{caller_pid: pid} do
     assert %Plug.Conn{} = :get
       |> conn("/my_route_default_ttl")
@@ -133,6 +160,7 @@ defmodule RequestCachePlugTest do
     end) =~ "RequestCache requested"
   end
 
+  @tag capture_log: true
   test "includes proper headers with when served from the cache", %{
     caller_pid: pid
   } do
@@ -162,10 +190,11 @@ defmodule RequestCachePlugTest do
            ]
   end
 
+  @tag capture_log: true
   test "allows for for custom content-type header and returns it when served from the cache", %{
     caller_pid: pid
   } do
-    route = "/my_route/:param"
+    route = "/my_route/cache"
     assert %Plug.Conn{resp_headers: uncached_headers} =
              :get
              |> conn(route)
