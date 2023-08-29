@@ -1,3 +1,7 @@
+# 0.3.0
+- Big fixes for caching not applying all the time
+- Content type fixes to respect different forms of responses
+
 # 0.2.4
 - Fix issue from defaults
 
