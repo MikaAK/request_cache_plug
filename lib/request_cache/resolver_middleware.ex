@@ -18,7 +18,7 @@ if absinthe_loaded? do
 
     defp enable_cache_for_resolution(resolution, opts) do
       if resolution.context[RequestCache.Config.conn_private_key()][:enabled?] do
-        config = [request: Keyword.delete(opts, :value)]
+        config = [request: Keyword.delete(opts, :value), cache_request?: true]
 
         resolution = %{resolution |
           state: :resolved,
@@ -42,6 +42,18 @@ if absinthe_loaded? do
           value: opts[:value],
         }
       end
+    end
+
+    @spec store_result(
+      result :: any,
+      opts_or_ttl :: opts | pos_integer
+    ) :: {:middleware, module, RequestCache.ResolverMiddleware.opts}
+    def store_result(result, ttl) when is_integer(ttl) do
+      store_result(result, [ttl: ttl])
+    end
+
+    def store_result(result, opts) when is_list(opts) do
+      {:middleware, RequestCache.ResolverMiddleware, Keyword.put(opts, :value, result)}
     end
   end
 end

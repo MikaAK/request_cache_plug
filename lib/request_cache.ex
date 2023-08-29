@@ -16,20 +16,13 @@ defmodule RequestCache do
     end
   end
 
-  if RequestCache.Application.dependency_found?(:absinthe) do
-    @spec store(
-      result :: any,
-      opts_or_ttl :: opts | pos_integer
-    ) :: {:middleware, module, RequestCache.ResolverMiddleware.opts}
-    def store(result, ttl) when is_integer(ttl) do
-      store(result, [ttl: ttl])
-    end
-
-    def store(result, opts) when is_list(opts) do
+  if RequestCache.Application.dependency_found?(:absinthe) and
+     RequestCache.Application.dependency_found?(:absinthe_plug) do
+    def store(result, opts_or_ttl) do
       if RequestCache.Config.enabled?() do
-        {:middleware, RequestCache.ResolverMiddleware, Keyword.put(opts, :value, result)}
+        RequestCache.ResolverMiddleware.store_result(result, opts_or_ttl)
       else
-        {:ok, result}
+        result
       end
     end
 
