@@ -13,7 +13,11 @@ if absinthe_loaded? do
 
     @impl Absinthe.Middleware
     def call(%Absinthe.Resolution{} = resolution, opts) do
-      enable_cache_for_resolution(resolution, opts)
+      if RequestCache.Config.enabled?() do
+        enable_cache_for_resolution(resolution, opts)
+      else
+        resolution
+      end
     end
 
     defp enable_cache_for_resolution(resolution, opts) do

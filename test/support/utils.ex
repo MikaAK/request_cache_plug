@@ -3,8 +3,12 @@ defmodule RequestCache.Support.Utils do
 
   alias Plug.Conn
 
-  def ensure_default_opts(conn) do
-    Conn.put_private(conn, RequestCache.Config.conn_private_key(), request: [])
+  def ensure_default_opts(conn, extra_opts \\ []) do
+    Conn.put_private(
+      conn,
+      RequestCache.Config.conn_private_key(),
+      Keyword.merge([request: []], extra_opts)
+    )
   end
 
   def graphql_conn, do: "GET" |> build_conn("/graphql") |> ensure_default_opts

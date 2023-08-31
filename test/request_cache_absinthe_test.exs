@@ -102,6 +102,44 @@ defmodule RequestCacheAbsintheTest do
   end
 
   @tag capture_log: true
+  test "does not errors when error caching not enabled", %{call_pid: pid} do
+    assert %Plug.Conn{} = :get
+      |> conn(graphql_url(@uncached_query))
+      |> RequestCache.Support.Utils.ensure_default_opts()
+      |> Absinthe.Plug.put_options(context: %{call_pid: pid})
+      |> Router.call([])
+
+    assert_raise Plug.Conn.WrapperError, fn ->
+      conn = :get
+      |> conn(graphql_url(@uncached_query))
+      |> RequestCache.Support.Utils.ensure_default_opts()
+      |> Absinthe.Plug.put_options(context: %{call_pid: pid})
+      |> Router.call([])
+
+      assert [] === get_resp_header(conn, RequestCache.Plug.request_cache_header())
+    end
+  end
+
+  @tag capture_log: true
+  test "caches errors when error caching enabled", %{call_pid: pid} do
+    assert %Plug.Conn{} = :get
+      |> conn(graphql_url(@uncached_query))
+      |> RequestCache.Support.Utils.ensure_default_opts()
+      |> Absinthe.Plug.put_options(context: %{call_pid: pid})
+      |> Router.call([])
+
+    assert_raise Plug.Conn.WrapperError, fn ->
+      conn = :get
+      |> conn(graphql_url(@uncached_query))
+      |> RequestCache.Support.Utils.ensure_default_opts()
+      |> Absinthe.Plug.put_options(context: %{call_pid: pid})
+      |> Router.call([])
+
+      assert [] === get_resp_header(conn, RequestCache.Plug.request_cache_header())
+    end
+  end
+
+  @tag capture_log: true
   test "allows you to use middleware before a resolver to cache the results of the request", %{call_pid: pid} do
     conn = :get
       |> conn(graphql_url(@query_2))
@@ -159,9 +197,6 @@ defmodule RequestCacheAbsintheTest do
         |> RouterWithoutPlug.call([])
         |> Map.get(:resp_body)
     end) =~ "RequestCache requested"
-  end
-
-  test "allows you to use `cache` key inside opts to override specific cache for a request" do
   end
 
   defp graphql_url(query) do
