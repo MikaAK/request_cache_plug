@@ -162,12 +162,13 @@ defmodule RequestCache.Plug do
     conn_request(conn)[:labels]
   end
 
-  defp enabled_for_request?(%Plug.Conn{private: private}) do
-    plug_present? = get_in(private, [conn_private_key(), :enabled?]) ||
-                    get_in(private, [:absinthe, :context, conn_private_key(), :enabled?])
+  defp request_cache_cached_errors(conn) do
+    conn_request(conn)[:cached_errors] || RequestCache.Config.cached_errors()
+  end
 
-    marked_for_cache? = get_in(private, [conn_private_key(), :cache_request?]) ||
-                        get_in(private, [:absinthe, :context, conn_private_key(), :cache_request?])
+  defp enabled_for_request?(%Plug.Conn{} = conn) do
+    plug_present? = !!conn_private_key_item(conn, :enabled?)
+    marked_for_cache? = !!conn_private_key_item(conn, :cache_request?)
 
     if plug_present? do
       Util.verbose_log("[RequestCache.Plug] Plug enabled for request")
@@ -177,13 +178,41 @@ defmodule RequestCache.Plug do
       Util.verbose_log("[RequestCache.Plug] Plug has been marked for cache")
     end
 
-    plug_present? && marked_for_cache?
+    plug_present? && marked_for_cache? && response_error_and_cached?(conn)
   end
 
-  defp conn_request(%Plug.Conn{private: private}) do
-    get_in(private, [conn_private_key(), :request])
-    || get_in(private, [:absinthe, :context, conn_private_key(), :request])
-    || []
+  defp response_error_and_cached?(%Plug.Conn{status: 200, request_path: path}) when path not in @graphql_paths do
+    true
+  end
+
+  defp response_error_and_cached?(%Plug.Conn{status: 200, request_path: path} = conn) when path in @graphql_paths do
+    gql_resp_success_or_has_known_error?(request_cache_cached_errors(conn), conn.resp_body)
+  end
+
+  defp response_error_and_cached?(%Plug.Conn{status: status} = conn) do
+    conn.private |> IO.inspect
+    cached_error_codes = request_cache_cached_errors(conn) |> IO.inspect
+
+    cached_error_codes !== [] and
+    (cached_error_codes === :all or Plug.Conn.Status.reason_atom(status) in cached_error_codes)
+  end
+
+  defp gql_resp_success_or_has_known_error?([], _resp_body), do: false
+  defp gql_resp_success_or_has_known_error?(:all, _resp_body), do: false
+
+  defp gql_resp_success_or_has_known_error?(cached_errors, resp_body) do
+    empty_errors? = String.contains?(resp_body, :binary.compile_pattern("\"errors\": []"))
+
+    empty_errors? or Enum.any?(cached_errors, &(resp_body =~ to_string(&1)))
+  end
+
+  defp conn_request(%Plug.Conn{} = conn) do
+    conn_private_key_item(conn, :request) || []
+  end
+
+  defp conn_private_key_item(%Plug.Conn{private: private}, name) do
+    get_in(private, [conn_private_key(), name])
+    || get_in(private, [:absinthe, :context, conn_private_key(), name])
   end
 
   if RequestCache.Application.dependency_found?(:absinthe_plug) do

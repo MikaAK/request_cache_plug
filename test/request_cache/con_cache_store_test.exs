@@ -39,7 +39,7 @@ defmodule RequestCache.ConCacheStoreTest do
     test "starts up properly" do
       pid_name = :"test_#{Enum.random(1..100_000_000)}"
 
-      start_link_supervised!(RequestCache.ConCacheStore.child_spec(name: :pid_name))
+      start_link_supervised!(RequestCache.ConCacheStore.child_spec(name: pid_name))
 
       assert pid_name |> Process.whereis |> Process.alive?
     end

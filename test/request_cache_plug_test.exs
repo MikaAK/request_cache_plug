@@ -34,7 +34,7 @@ defmodule RequestCachePlugTest do
         |> send_resp(200, Jason.encode!(%{test: Enum.random(1..100_000_000)}))
     end
 
-    match "/error-route" do
+    match "/error-route/:param" do
       conn
         |> RequestCache.store(:timer.seconds(20))
         |> send_resp(404, Jason.encode!(%{code: :not_found, message: "NOT WORKING #{Enum.random(1..100_000_000)}"}))
@@ -228,12 +228,12 @@ defmodule RequestCachePlugTest do
   end
 
   test "doesn't cache errors if error caching not enabled", %{caller_pid: pid} do
-    route = "/error-route"
+    route = "/error-route/no-error-cache-enabled"
 
     assert %Plug.Conn{resp_headers: uncached_headers} =
              :get
              |> conn(route)
-             |> RequestCache.Support.Utils.ensure_default_opts(cached_errors: [])
+             |> RequestCache.Support.Utils.ensure_default_opts(request: [cached_errors: []])
              |> put_private(:call_pid, pid)
              |> Router.call([])
 
@@ -246,7 +246,6 @@ defmodule RequestCachePlugTest do
              |> conn(route)
              |> RequestCache.Support.Utils.ensure_default_opts()
              |> put_private(:call_pid, pid)
-             |> put_resp_content_type("text/html")
              |> Router.call([])
 
     assert expected_uncached_headers === [
@@ -254,13 +253,13 @@ defmodule RequestCachePlugTest do
            ]
   end
 
-  test "caches errors if error cached error code enabled", %{caller_pid: pid} do
-    route = "/error-route"
+  test "caches errors if error codes supplied and is error", %{caller_pid: pid} do
+    route = "/error-route/caching-errors-enabled"
 
     assert %Plug.Conn{resp_headers: uncached_headers} =
              :get
              |> conn(route)
-             |> RequestCache.Support.Utils.ensure_default_opts(cached_errors: [:not_found])
+             |> RequestCache.Support.Utils.ensure_default_opts(request: [cached_errors: [:not_found]])
              |> put_private(:call_pid, pid)
              |> Router.call([])
 
@@ -271,7 +270,7 @@ defmodule RequestCachePlugTest do
     assert %Plug.Conn{resp_headers: expected_cached_headers} =
              :get
              |> conn(route)
-             |> RequestCache.Support.Utils.ensure_default_opts()
+             |> RequestCache.Support.Utils.ensure_default_opts(request: [cached_errors: [:not_found]])
              |> put_private(:call_pid, pid)
              |> put_resp_content_type("text/html")
              |> Router.call([])
@@ -284,12 +283,12 @@ defmodule RequestCachePlugTest do
   end
 
   test "caches errors if error caching enabled", %{caller_pid: pid} do
-    route = "/error-route"
+    route = "/error-route/all-errors-enabled"
 
     assert %Plug.Conn{resp_headers: uncached_headers} =
              :get
              |> conn(route)
-             |> RequestCache.Support.Utils.ensure_default_opts(cached_errors: :all)
+             |> RequestCache.Support.Utils.ensure_default_opts(request: [cached_errors: :all])
              |> put_private(:call_pid, pid)
              |> Router.call([])
 
@@ -300,7 +299,7 @@ defmodule RequestCachePlugTest do
     assert %Plug.Conn{resp_headers: expected_cached_headers} =
              :get
              |> conn(route)
-             |> RequestCache.Support.Utils.ensure_default_opts()
+             |> RequestCache.Support.Utils.ensure_default_opts(request: [cached_errors: :all])
              |> put_private(:call_pid, pid)
              |> put_resp_content_type("text/html")
              |> Router.call([])
