@@ -9,6 +9,7 @@ if absinthe_loaded? do
     @impl Absinthe.Middleware
     def call(%Absinthe.Resolution{} = resolution, opts) when is_list(opts) do
       opts = ensure_valid_ttl(opts)
+
       enable_cache_for_resolution(resolution, opts)
     end
 
@@ -18,16 +19,19 @@ if absinthe_loaded? do
     end
 
     defp enable_cache_for_resolution(resolution, opts) do
+      resolution = resolve_resolver_func_middleware(resolution, opts)
+
       if resolution.context[RequestCache.Config.conn_private_key()][:enabled?] do
         if RequestCache.Config.verbose?() do
           Util.verbose_log("[RequestCache.Middleware] Enabling cache for resolution")
         end
 
         %{resolution |
+          value: resolution.value || opts[:value],
           context: Map.update!(
             resolution.context,
             RequestCache.Config.conn_private_key(),
-            &Keyword.merge(&1, [request: opts, cache_request?: true])
+            &Util.deep_merge(&1, request: opts, cache_request?: true)
           )
         }
       else
@@ -37,9 +41,32 @@ if absinthe_loaded? do
       end
     end
 
+    defp resolve_resolver_func_middleware(resolution, opts) do
+      if resolver_middleware?(opts) do
+        %{resolution | state: :resolved}
+      else
+        resolution
+      end
+    end
+
+    defp resolver_middleware?(opts), do: opts[:value]
+
     defp ensure_valid_ttl(opts) do
       ttl = opts[:ttl] || RequestCache.Config.default_ttl()
+
       Keyword.put(opts, :ttl, ttl)
+    end
+
+    @spec store_result(
+      result :: any,
+      opts_or_ttl :: RequestCache.opts | pos_integer
+    ) :: {:middleware, module, RequestCache.opts}
+    def store_result(result, ttl) when is_integer(ttl) do
+      store_result(result, [ttl: ttl])
+    end
+
+    def store_result(result, opts) when is_list(opts) do
+      {:middleware, RequestCache.Middleware, Keyword.put(opts, :value, result)}
     end
   end
 end

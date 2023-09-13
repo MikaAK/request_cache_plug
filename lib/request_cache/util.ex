@@ -3,6 +3,9 @@ defmodule RequestCache.Util do
 
   @moduledoc false
 
+  @whitelisted_modules [DateTime, NaiveDateTime, Date, Time, File.Stat, MapSet, Regex, URI, Version]
+
+
   # def parse_gql_name(query_string) do
   #   case Regex.run(~r/^(?:query) ([^\({]+(?=\(|{))/, query_string, capture: :all_but_first) do
   #     [query_name] -> String.trim(query_name)
@@ -26,5 +29,23 @@ defmodule RequestCache.Util do
     if RequestCache.Config.verbose?() do
       Logger.debug(message)
     end
+  end
+
+  def deep_merge(list_a, list_b) when is_list(list_a) and is_list(list_b) do
+    Keyword.merge(list_a, list_b, fn
+      _k, _, %struct{} = right when struct in @whitelisted_modules -> right
+      _k, left, right when is_map(left) and is_map(right) -> deep_merge(left, right)
+      _k, left, right when is_list(left) and is_list(right) -> deep_merge(left, right)
+      _, _, right -> right
+    end)
+  end
+
+  def deep_merge(map_a, map_b) do
+    Map.merge(map_a, map_b, fn
+      _k, _, %struct{} = right when struct in @whitelisted_modules -> right
+      _k, left, right when is_map(left) and is_map(right) -> deep_merge(left, right)
+      _k, left, right when is_list(left) and is_list(right) -> deep_merge(left, right)
+      _, _, right -> right
+    end)
   end
 end

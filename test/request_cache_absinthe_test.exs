@@ -39,6 +39,36 @@ defmodule RequestCacheAbsintheTest do
           {:ok, "HelloError"}
         end
       end
+
+      field :uncached_error, :string do
+        middleware RequestCache.Middleware, cached_errors: []
+
+        resolve fn _, %{context: %{call_pid: pid}} ->
+          EnsureCalledOnlyOnce.call(pid)
+
+          {:error, %{code: :not_found, message: "TesT"}}
+        end
+      end
+
+      field :cached_all_error, :string do
+        arg :code, non_null(:string)
+
+        middleware RequestCache.Middleware, cached_errors: :all
+
+        resolve fn %{code: code}, %{context: %{call_pid: pid}} ->
+          EnsureCalledOnlyOnce.call(pid)
+          {:error, %{code: code, message: "TesT"}}
+        end
+      end
+
+      field :cached_not_found_error, :string do
+        middleware RequestCache.Middleware, cached_errors: [:not_found]
+
+        resolve fn _, %{context: %{call_pid: pid}} ->
+          EnsureCalledOnlyOnce.call(pid)
+          {:error, %{code: :not_found, message: "TesT"}}
+        end
+      end
     end
   end
 
@@ -75,6 +105,9 @@ defmodule RequestCacheAbsintheTest do
   @query_2 "query Hello2 { helloWorld }"
   @query_error "query HelloError { helloError }"
   @uncached_query "query HelloUncached { uncachedHello }"
+  @uncached_error_query "query UncachedFound { uncachedError }"
+  @cached_all_error_query "query CachedAllFound { cachedAllError(code: \"not_found\") }"
+  @cached_not_found_error_query "query CachedNotFound { cachedNotFoundError }"
 
   setup do
     {:ok, pid} = EnsureCalledOnlyOnce.start_link()
@@ -102,16 +135,16 @@ defmodule RequestCacheAbsintheTest do
   end
 
   @tag capture_log: true
-  test "does not errors when error caching not enabled", %{call_pid: pid} do
+  test "does not cache errors when error caching not enabled", %{call_pid: pid} do
     assert %Plug.Conn{} = :get
-      |> conn(graphql_url(@uncached_query))
+      |> conn(graphql_url(@uncached_error_query))
       |> RequestCache.Support.Utils.ensure_default_opts()
       |> Absinthe.Plug.put_options(context: %{call_pid: pid})
       |> Router.call([])
 
     assert_raise Plug.Conn.WrapperError, fn ->
       conn = :get
-      |> conn(graphql_url(@uncached_query))
+      |> conn(graphql_url(@uncached_error_query))
       |> RequestCache.Support.Utils.ensure_default_opts()
       |> Absinthe.Plug.put_options(context: %{call_pid: pid})
       |> Router.call([])
@@ -121,22 +154,35 @@ defmodule RequestCacheAbsintheTest do
   end
 
   @tag capture_log: true
-  test "caches errors when error caching enabled", %{call_pid: pid} do
+  test "caches errors when error caching set to :all", %{call_pid: pid} do
     assert %Plug.Conn{} = :get
-      |> conn(graphql_url(@uncached_query))
-      |> RequestCache.Support.Utils.ensure_default_opts()
+      |> conn(graphql_url(@cached_all_error_query))
+      |> RequestCache.Support.Utils.ensure_default_opts(request: [cached_errors: :all])
       |> Absinthe.Plug.put_options(context: %{call_pid: pid})
       |> Router.call([])
 
-    assert_raise Plug.Conn.WrapperError, fn ->
-      conn = :get
-      |> conn(graphql_url(@uncached_query))
-      |> RequestCache.Support.Utils.ensure_default_opts()
+    assert ["HIT"] = :get
+    |> conn(graphql_url(@cached_all_error_query))
+    |> RequestCache.Support.Utils.ensure_default_opts(request: [cached_errors: :all])
+    |> Absinthe.Plug.put_options(context: %{call_pid: pid})
+    |> Router.call([])
+    |> get_resp_header(RequestCache.Plug.request_cache_header())
+  end
+
+  @tag capture_log: true
+  test "caches errors when error caching set to [:not_found]", %{call_pid: pid} do
+    assert %Plug.Conn{} = :get
+      |> conn(graphql_url(@cached_not_found_error_query))
+      |> RequestCache.Support.Utils.ensure_default_opts(request: [cached_errors: [:not_found]])
       |> Absinthe.Plug.put_options(context: %{call_pid: pid})
       |> Router.call([])
 
-      assert [] === get_resp_header(conn, RequestCache.Plug.request_cache_header())
-    end
+    assert ["HIT"] = :get
+    |> conn(graphql_url(@cached_not_found_error_query))
+    |> RequestCache.Support.Utils.ensure_default_opts(request: [cached_errors: [:not_found]])
+    |> Absinthe.Plug.put_options(context: %{call_pid: pid})
+    |> Router.call([])
+    |> get_resp_header(RequestCache.Plug.request_cache_header())
   end
 
   @tag capture_log: true

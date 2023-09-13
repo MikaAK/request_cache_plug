@@ -188,6 +188,19 @@ The events will look like this:
 }
 ```
 
+##### Enable Error Caching
+In order to enable error caching we can either setup `cached_errors` in our config
+or as an option to `RequestCache.store` or `RequestCache.Middleware`.
+
+The value of `cached_errors` can be one of `[]`, `:all` or a list of reason_atoms as
+defined by `Plug.Conn.Status` such as `:not_found`, or `:internal_server_error`.
+
+In REST this works off the response codes returned. However, in order to use reason_atoms in GraphQL
+you will need to make sure your errors contain some sort of `%{code: "not_found"}` response in them
+
+Take a look at [error_message](https://github.com/MikaAK/elixir_error_message) for a compatible error system
+
+
 ### Notes/Gotchas
 - In order for this caching to work, we cannot be using POST requests as specced out by GraphQL, not for queries at least, fortunately this doesn't actually matter since we can use any http method we want (there will be a limit to query size), in a production app you may be doing this already due to the caching you gain from CloudFlare
 - Caches for gql are stored via the name parameter that comes back from the query (for now) so you must name your queries to get caching
