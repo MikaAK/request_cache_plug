@@ -125,10 +125,10 @@ defmodule RequestCacheAbsintheTest do
 
     assert_raise Plug.Conn.WrapperError, fn ->
       conn = :get
-      |> conn(graphql_url(@uncached_query))
-      |> RequestCache.Support.Utils.ensure_default_opts()
-      |> Absinthe.Plug.put_options(context: %{call_pid: pid})
-      |> Router.call([])
+        |> conn(graphql_url(@uncached_query))
+        |> RequestCache.Support.Utils.ensure_default_opts()
+        |> Absinthe.Plug.put_options(context: %{call_pid: pid})
+        |> Router.call([])
 
       assert [] === get_resp_header(conn, RequestCache.Plug.request_cache_header())
     end
@@ -144,10 +144,10 @@ defmodule RequestCacheAbsintheTest do
 
     assert_raise Plug.Conn.WrapperError, fn ->
       conn = :get
-      |> conn(graphql_url(@uncached_error_query))
-      |> RequestCache.Support.Utils.ensure_default_opts()
-      |> Absinthe.Plug.put_options(context: %{call_pid: pid})
-      |> Router.call([])
+        |> conn(graphql_url(@uncached_error_query))
+        |> RequestCache.Support.Utils.ensure_default_opts()
+        |> Absinthe.Plug.put_options(context: %{call_pid: pid})
+        |> Router.call([])
 
       assert [] === get_resp_header(conn, RequestCache.Plug.request_cache_header())
     end
@@ -162,11 +162,11 @@ defmodule RequestCacheAbsintheTest do
       |> Router.call([])
 
     assert ["HIT"] = :get
-    |> conn(graphql_url(@cached_all_error_query))
-    |> RequestCache.Support.Utils.ensure_default_opts(request: [cached_errors: :all])
-    |> Absinthe.Plug.put_options(context: %{call_pid: pid})
-    |> Router.call([])
-    |> get_resp_header(RequestCache.Plug.request_cache_header())
+      |> conn(graphql_url(@cached_all_error_query))
+      |> RequestCache.Support.Utils.ensure_default_opts(request: [cached_errors: :all])
+      |> Absinthe.Plug.put_options(context: %{call_pid: pid})
+      |> Router.call([])
+      |> get_resp_header(RequestCache.Plug.request_cache_header())
   end
 
   @tag capture_log: true
@@ -178,11 +178,11 @@ defmodule RequestCacheAbsintheTest do
       |> Router.call([])
 
     assert ["HIT"] = :get
-    |> conn(graphql_url(@cached_not_found_error_query))
-    |> RequestCache.Support.Utils.ensure_default_opts(request: [cached_errors: [:not_found]])
-    |> Absinthe.Plug.put_options(context: %{call_pid: pid})
-    |> Router.call([])
-    |> get_resp_header(RequestCache.Plug.request_cache_header())
+      |> conn(graphql_url(@cached_not_found_error_query))
+      |> RequestCache.Support.Utils.ensure_default_opts(request: [cached_errors: [:not_found]])
+      |> Absinthe.Plug.put_options(context: %{call_pid: pid})
+      |> Router.call([])
+      |> get_resp_header(RequestCache.Plug.request_cache_header())
   end
 
   @tag capture_log: true

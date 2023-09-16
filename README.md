@@ -203,7 +203,7 @@ Take a look at [error_message](https://github.com/MikaAK/elixir_error_message) f
 
 ### Notes/Gotchas
 - In order for this caching to work, we cannot be using POST requests as specced out by GraphQL, not for queries at least, fortunately this doesn't actually matter since we can use any http method we want (there will be a limit to query size), in a production app you may be doing this already due to the caching you gain from CloudFlare
-- Caches for gql are stored via the name parameter that comes back from the query (for now) so you must name your queries to get caching
+- Caches are stored via a MD5 hashed key that correlates to your query in GraphQL, or in REST your url path + query parameters
 - Absinthe and ConCache are optional dependencies, if you don't have them you won't have access to `RequestCache.Middleware` or `RequestCache.ConCacheStore`
 - If no ConCache is found, you must set `config :request_cache_module` to something else
 

@@ -22,9 +22,7 @@ if absinthe_loaded? do
       resolution = resolve_resolver_func_middleware(resolution, opts)
 
       if resolution.context[RequestCache.Config.conn_private_key()][:enabled?] do
-        if RequestCache.Config.verbose?() do
-          Util.verbose_log("[RequestCache.Middleware] Enabling cache for resolution")
-        end
+        Util.verbose_log("[RequestCache.Middleware] Enabling cache for resolution")
 
         %{resolution |
           value: resolution.value || opts[:value],

@@ -29,6 +29,7 @@ defmodule RequestCache.TelemetryMetricsTest do
       %{conn: conn}
     end
 
+    @tag capture_log: true
     test "cache miss", %{parent_pid: parent_pid, test: test, conn: conn} do
       start_telemetry_listener(parent_pid, test, @expected_graphql_cache_miss_event_name)
 
@@ -38,6 +39,7 @@ defmodule RequestCache.TelemetryMetricsTest do
                       @expected_measurements, _metadata}
     end
 
+    @tag capture_log: true
     test "cache miss with labels", %{parent_pid: parent_pid, test: test, conn: conn} do
       start_telemetry_listener(parent_pid, test, @expected_graphql_cache_miss_event_name)
 
@@ -67,6 +69,7 @@ defmodule RequestCache.TelemetryMetricsTest do
       %{conn: conn}
     end
 
+    @tag capture_log: true
     test "cache hit", %{parent_pid: parent_pid, test: test, conn: conn} do
       start_telemetry_listener(parent_pid, test, @expected_graphql_cache_hit_event_name)
 
@@ -76,6 +79,7 @@ defmodule RequestCache.TelemetryMetricsTest do
         @expected_measurements, _metadata}
     end
 
+    @tag capture_log: true
     test "cache hit with labels", %{parent_pid: parent_pid, test: test, conn: conn} do
       start_telemetry_listener(parent_pid, test, @expected_graphql_cache_hit_event_name)
 
@@ -91,6 +95,7 @@ defmodule RequestCache.TelemetryMetricsTest do
   end
 
   describe "REST RequestCache.Plug.call/2" do
+    @tag capture_log: true
     test "cache miss", %{parent_pid: parent_pid, test: test} do
       start_telemetry_listener(parent_pid, test, @expected_rest_cache_miss_event_name)
 
@@ -102,6 +107,7 @@ defmodule RequestCache.TelemetryMetricsTest do
                       @expected_measurements, _metadata}
     end
 
+    @tag capture_log: true
     test "cache hit", %{parent_pid: parent_pid, test: test} do
       RequestCache.ConCacheStore.put(
         nil,
@@ -122,6 +128,7 @@ defmodule RequestCache.TelemetryMetricsTest do
   end
 
   describe "metrics/0" do
+    @tag capture_log: true
     test "metric definitions are correct" do
       assert [
         %Telemetry.Metrics.Counter{

@@ -171,29 +171,27 @@ defmodule RequestCachePlugTest do
     caller_pid: pid
   } do
     route = "/my_route/html"
-    assert %Plug.Conn{resp_headers: uncached_headers} =
-             :get
-             |> conn(route)
-             |> RequestCache.Support.Utils.ensure_default_opts()
-             |> put_private(:call_pid, pid)
-             |> Router.call([])
+    assert %Plug.Conn{resp_headers: uncached_headers} = :get
+      |> conn(route)
+      |> RequestCache.Support.Utils.ensure_default_opts()
+      |> put_private(:call_pid, pid)
+      |> Router.call([])
 
     assert uncached_headers === [
        {"cache-control", "max-age=0, private, must-revalidate"}
     ]
 
-    assert %Plug.Conn{resp_headers: resp_headers} =
-             :get
-             |> conn(route)
-             |> RequestCache.Support.Utils.ensure_default_opts()
-             |> put_private(:call_pid, pid)
-             |> Router.call([])
+    assert %Plug.Conn{resp_headers: resp_headers} = :get
+      |> conn(route)
+      |> RequestCache.Support.Utils.ensure_default_opts()
+      |> put_private(:call_pid, pid)
+      |> Router.call([])
 
     assert resp_headers === [
-             {"cache-control", "max-age=0, private, must-revalidate"},
-             {"rc-cache-status", "HIT"},
-             {"content-type", "application/json; charset=utf-8"}
-           ]
+      {"cache-control", "max-age=0, private, must-revalidate"},
+      {"rc-cache-status", "HIT"},
+      {"content-type", "application/json; charset=utf-8"}
+    ]
   end
 
   @tag capture_log: true
@@ -201,113 +199,105 @@ defmodule RequestCachePlugTest do
     caller_pid: pid
   } do
     route = "/my_route/cache"
-    assert %Plug.Conn{resp_headers: uncached_headers} =
-             :get
-             |> conn(route)
-             |> RequestCache.Support.Utils.ensure_default_opts()
-             |> put_private(:call_pid, pid)
-             |> Router.call([])
+    assert %Plug.Conn{resp_headers: uncached_headers} = :get
+      |> conn(route)
+      |> RequestCache.Support.Utils.ensure_default_opts()
+      |> put_private(:call_pid, pid)
+      |> Router.call([])
 
     assert uncached_headers === [
-       {"cache-control", "max-age=0, private, must-revalidate"}
+      {"cache-control", "max-age=0, private, must-revalidate"}
     ]
 
-    assert %Plug.Conn{resp_headers: resp_headers} =
-             :get
-             |> conn(route)
-             |> RequestCache.Support.Utils.ensure_default_opts()
-             |> put_private(:call_pid, pid)
-             |> put_resp_content_type("text/html")
-             |> Router.call([])
+    assert %Plug.Conn{resp_headers: resp_headers} = :get
+      |> conn(route)
+      |> RequestCache.Support.Utils.ensure_default_opts()
+      |> put_private(:call_pid, pid)
+      |> put_resp_content_type("text/html")
+      |> Router.call([])
 
     assert resp_headers === [
-             {"cache-control", "max-age=0, private, must-revalidate"},
-             {"content-type", "text/html; charset=utf-8"},
-             {"rc-cache-status", "HIT"}
-           ]
+      {"cache-control", "max-age=0, private, must-revalidate"},
+      {"content-type", "text/html; charset=utf-8"},
+      {"rc-cache-status", "HIT"}
+    ]
   end
 
   test "doesn't cache errors if error caching not enabled", %{caller_pid: pid} do
     route = "/error-route/no-error-cache-enabled"
 
-    assert %Plug.Conn{resp_headers: uncached_headers} =
-             :get
-             |> conn(route)
-             |> RequestCache.Support.Utils.ensure_default_opts(request: [cached_errors: []])
-             |> put_private(:call_pid, pid)
-             |> Router.call([])
+    assert %Plug.Conn{resp_headers: uncached_headers} = :get
+      |> conn(route)
+      |> RequestCache.Support.Utils.ensure_default_opts(request: [cached_errors: []])
+      |> put_private(:call_pid, pid)
+      |> Router.call([])
 
     assert uncached_headers === [
-       {"cache-control", "max-age=0, private, must-revalidate"}
+      {"cache-control", "max-age=0, private, must-revalidate"}
     ]
 
-    assert %Plug.Conn{resp_headers: expected_uncached_headers} =
-             :get
-             |> conn(route)
-             |> RequestCache.Support.Utils.ensure_default_opts()
-             |> put_private(:call_pid, pid)
-             |> Router.call([])
+    assert %Plug.Conn{resp_headers: expected_uncached_headers} = :get
+      |> conn(route)
+      |> RequestCache.Support.Utils.ensure_default_opts()
+      |> put_private(:call_pid, pid)
+      |> Router.call([])
 
     assert expected_uncached_headers === [
-             {"cache-control", "max-age=0, private, must-revalidate"}
-           ]
+      {"cache-control", "max-age=0, private, must-revalidate"}
+    ]
   end
 
   test "caches errors if error codes supplied and is error", %{caller_pid: pid} do
     route = "/error-route/caching-errors-enabled"
 
-    assert %Plug.Conn{resp_headers: uncached_headers} =
-             :get
-             |> conn(route)
-             |> RequestCache.Support.Utils.ensure_default_opts(request: [cached_errors: [:not_found]])
-             |> put_private(:call_pid, pid)
-             |> Router.call([])
+    assert %Plug.Conn{resp_headers: uncached_headers} = :get
+      |> conn(route)
+      |> RequestCache.Support.Utils.ensure_default_opts(request: [cached_errors: [:not_found]])
+      |> put_private(:call_pid, pid)
+      |> Router.call([])
 
     assert uncached_headers === [
-       {"cache-control", "max-age=0, private, must-revalidate"}
+      {"cache-control", "max-age=0, private, must-revalidate"}
     ]
 
-    assert %Plug.Conn{resp_headers: expected_cached_headers} =
-             :get
-             |> conn(route)
-             |> RequestCache.Support.Utils.ensure_default_opts(request: [cached_errors: [:not_found]])
-             |> put_private(:call_pid, pid)
-             |> put_resp_content_type("text/html")
-             |> Router.call([])
+    assert %Plug.Conn{resp_headers: expected_cached_headers} = :get
+      |> conn(route)
+      |> RequestCache.Support.Utils.ensure_default_opts(request: [cached_errors: [:not_found]])
+      |> put_private(:call_pid, pid)
+      |> put_resp_content_type("text/html")
+      |> Router.call([])
 
     assert expected_cached_headers === [
-             {"cache-control", "max-age=0, private, must-revalidate"},
-             {"content-type", "text/html; charset=utf-8"},
-             {"rc-cache-status", "HIT"}
-           ]
+      {"cache-control", "max-age=0, private, must-revalidate"},
+      {"content-type", "text/html; charset=utf-8"},
+      {"rc-cache-status", "HIT"}
+    ]
   end
 
   test "caches errors if error caching enabled", %{caller_pid: pid} do
     route = "/error-route/all-errors-enabled"
 
-    assert %Plug.Conn{resp_headers: uncached_headers} =
-             :get
-             |> conn(route)
-             |> RequestCache.Support.Utils.ensure_default_opts(request: [cached_errors: :all])
-             |> put_private(:call_pid, pid)
-             |> Router.call([])
+    assert %Plug.Conn{resp_headers: uncached_headers} = :get
+      |> conn(route)
+      |> RequestCache.Support.Utils.ensure_default_opts(request: [cached_errors: :all])
+      |> put_private(:call_pid, pid)
+      |> Router.call([])
 
     assert uncached_headers === [
-       {"cache-control", "max-age=0, private, must-revalidate"}
+      {"cache-control", "max-age=0, private, must-revalidate"}
     ]
 
-    assert %Plug.Conn{resp_headers: expected_cached_headers} =
-             :get
-             |> conn(route)
-             |> RequestCache.Support.Utils.ensure_default_opts(request: [cached_errors: :all])
-             |> put_private(:call_pid, pid)
-             |> put_resp_content_type("text/html")
-             |> Router.call([])
+    assert %Plug.Conn{resp_headers: expected_cached_headers} = :get
+      |> conn(route)
+      |> RequestCache.Support.Utils.ensure_default_opts(request: [cached_errors: :all])
+      |> put_private(:call_pid, pid)
+      |> put_resp_content_type("text/html")
+      |> Router.call([])
 
     assert expected_cached_headers === [
-             {"cache-control", "max-age=0, private, must-revalidate"},
-             {"content-type", "text/html; charset=utf-8"},
-             {"rc-cache-status", "HIT"}
-           ]
+      {"cache-control", "max-age=0, private, must-revalidate"},
+      {"content-type", "text/html; charset=utf-8"},
+      {"rc-cache-status", "HIT"}
+    ]
   end
 end
