@@ -2,6 +2,6 @@
   "skip_files": ["lib/request_cache/application.ex"],
   "custom_stop_words": ["defdelegate"],
   "terminal_options": {"file_column_width": 80},
-  "coverage_options": {"treat_no_relevant_lines_as_covered": true, "minimum_coverage": 85}
+  "coverage_options": {"treat_no_relevant_lines_as_covered": true, "minimum_coverage": 90}
 }
 
