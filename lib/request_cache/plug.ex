@@ -34,13 +34,20 @@ defmodule RequestCache.Plug do
     end
   end
 
-  defp call_for_api_type(%Plug.Conn{request_path: path, method: "GET", query_string: query_string} = conn, opts) when path in @graphql_paths do
+  defp call_for_api_type(%Plug.Conn{
+    request_path: path,
+    method: "GET",
+    query_string: query_string
+  } = conn, opts) when path in @graphql_paths do
     Util.verbose_log("[RequestCache.Plug] GraphQL query detected")
 
     maybe_return_cached_result(conn, opts, path, query_string)
   end
 
-  defp call_for_api_type(%Plug.Conn{request_path: path, method: "GET"} = conn, opts) when path not in @graphql_paths do
+  defp call_for_api_type(%Plug.Conn{
+    request_path: path,
+    method: "GET"
+  } = conn, opts) when path not in @graphql_paths do
     Util.verbose_log("[RequestCache.Plug] REST path detected")
 
     cache_key = rest_cache_key(conn)
