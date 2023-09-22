@@ -164,7 +164,11 @@ For GraphQL endpoints it is possible to provide a list of atoms that will be pas
 field :user, :user do
   arg :id, non_null(:id)
 
-  middleware RequestCache.Middleware, ttl: :timer.seconds(60), cache: MyCacheModule, labels: [:service, :endpoint]
+  middleware RequestCache.Middleware,
+    ttl: :timer.seconds(60),
+    cache: MyCacheModule,
+    labels: [:service, :endpoint],
+    whitelisted_query_names: ["MyQueryName"] # By default all queries are cached, can also whitelist based off query name from GQL Document
 
   resolve &Resolvers.User.find/2
 end

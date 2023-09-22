@@ -18,18 +18,33 @@ if absinthe_loaded? do
       enable_cache_for_resolution(resolution, ttl: ttl)
     end
 
-    defp enable_cache_for_resolution(resolution, opts) do
+    defp ensure_valid_ttl(opts) do
+      ttl = opts[:ttl] || RequestCache.Config.default_ttl()
+
+      Keyword.put(opts, :ttl, ttl)
+    end
+
+    defp enable_cache_for_resolution(%Absinthe.Resolution{} = resolution, opts) do
       resolution = resolve_resolver_func_middleware(resolution, opts)
 
       if resolution.context[RequestCache.Config.conn_private_key()][:enabled?] do
         Util.verbose_log("[RequestCache.Middleware] Enabling cache for resolution")
+
+        root_resolution_path_item = List.last(resolution.path)
+
+        cache_request? = !!root_resolution_path_item &&
+                         root_resolution_path_item.schema_node.name === "RootQueryType" &&
+                         query_name_whitelisted?(root_resolution_path_item.name, opts)
 
         %{resolution |
           value: resolution.value || opts[:value],
           context: Map.update!(
             resolution.context,
             RequestCache.Config.conn_private_key(),
-            &Util.deep_merge(&1, request: opts, cache_request?: true)
+            &Util.deep_merge(&1,
+              request: opts,
+              cache_request?: cache_request?
+            )
           )
         }
       else
@@ -49,10 +64,8 @@ if absinthe_loaded? do
 
     defp resolver_middleware?(opts), do: opts[:value]
 
-    defp ensure_valid_ttl(opts) do
-      ttl = opts[:ttl] || RequestCache.Config.default_ttl()
-
-      Keyword.put(opts, :ttl, ttl)
+    defp query_name_whitelisted?(query_name, opts) do
+      is_nil(opts[:whitelisted_query_names]) or query_name in opts[:whitelisted_query_names]
     end
 
     @spec store_result(

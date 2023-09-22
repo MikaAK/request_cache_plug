@@ -8,6 +8,14 @@ defmodule RequestCacheAbsintheTest do
   defmodule Schema do
     use Absinthe.Schema
 
+    object :nested_item do
+      field :world, :string
+    end
+
+    object :item do
+      field :tester, :nested_item
+    end
+
     query do
       field :hello, :string do
         resolve fn _, %{context: %{call_pid: pid}} ->
@@ -69,6 +77,18 @@ defmodule RequestCacheAbsintheTest do
           {:error, %{code: :not_found, message: "TesT"}}
         end
       end
+
+      field :whitelist_cached_hello, :item do
+        middleware RequestCache.Middleware, whitelisted_query_names: ["SmallHello"]
+
+        resolve fn _, _ ->
+          {:ok, %{
+            tester: %{
+              world: "hello"
+            }
+          }}
+        end
+      end
     end
   end
 
@@ -108,6 +128,9 @@ defmodule RequestCacheAbsintheTest do
   @uncached_error_query "query UncachedFound { uncachedError }"
   @cached_all_error_query "query CachedAllFound { cachedAllError(code: \"not_found\") }"
   @cached_not_found_error_query "query CachedNotFound { cachedNotFoundError }"
+  @whitelist_named_query "query SmallHello { whitelistCachedHello { tester { world }} }"
+  @whitelist_uncached_named_query "query SmallerHello { whitelistCachedHello { tester { world }} }"
+  @whitelist_unnamed_query "query { whitelistCachedHello { tester { world }} }"
 
   setup do
     {:ok, pid} = EnsureCalledOnlyOnce.start_link()
@@ -243,6 +266,48 @@ defmodule RequestCacheAbsintheTest do
         |> RouterWithoutPlug.call([])
         |> Map.get(:resp_body)
     end) =~ "RequestCache requested"
+  end
+
+  @tag capture_log: true
+  test "whitelist doesn't cache unspecified queries" do
+    assert [] = :get
+      |> conn(graphql_url(@whitelist_uncached_named_query))
+      |> RequestCache.Support.Utils.ensure_default_opts(request: [whitelisted_query_names: ["SmallHello"]])
+      |> Router.call([])
+      |> get_resp_header(RequestCache.Plug.request_cache_header())
+
+    assert [] = :get
+      |> conn(graphql_url(@whitelist_uncached_named_query))
+      |> RequestCache.Support.Utils.ensure_default_opts(request: [whitelisted_query_names: ["SmallHello"]])
+      |> Router.call([])
+      |> get_resp_header(RequestCache.Plug.request_cache_header())
+
+    assert [] = :get
+      |> conn(graphql_url(@whitelist_unnamed_query))
+      |> RequestCache.Support.Utils.ensure_default_opts(request: [whitelisted_query_names: ["SmallHello"]])
+      |> Router.call([])
+      |> get_resp_header(RequestCache.Plug.request_cache_header())
+
+    assert [] = :get
+      |> conn(graphql_url(@whitelist_unnamed_query))
+      |> RequestCache.Support.Utils.ensure_default_opts(request: [whitelisted_query_names: ["SmallHello"]])
+      |> Router.call([])
+      |> get_resp_header(RequestCache.Plug.request_cache_header())
+  end
+
+  @tag capture_log: true
+  test "whitelist caches specific named queries" do
+    assert [] = :get
+      |> conn(graphql_url(@whitelist_named_query))
+      |> RequestCache.Support.Utils.ensure_default_opts(request: [whitelisted_query_names: ["SmallHello"]])
+      |> Router.call([])
+      |> get_resp_header(RequestCache.Plug.request_cache_header())
+
+    assert ["HIT"] = :get
+      |> conn(graphql_url(@whitelist_named_query))
+      |> RequestCache.Support.Utils.ensure_default_opts(request: [whitelisted_query_names: ["SmallHello"]])
+      |> Router.call([])
+      |> get_resp_header(RequestCache.Plug.request_cache_header())
   end
 
   defp graphql_url(query) do
