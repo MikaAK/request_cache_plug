@@ -16,7 +16,7 @@ defmodule RequestCache.Config do
   end
 
   def cached_errors do
-    Application.get_env(@app, :cached_errors) || :all
+    Application.get_env(@app, :cached_errors) || []
   end
 
   def request_cache_module do
