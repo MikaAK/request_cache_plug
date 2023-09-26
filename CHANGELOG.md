@@ -1,3 +1,7 @@
+# 0.4.0
+- add whitelist for specific query names for caching instead of caching all, default all still cached
+- add ability to tune caching errors, default all still cached
+
 # 0.3.0
 - Big fixes for caching not applying all the time
 - Content type fixes to respect different forms of responses
