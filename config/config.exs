@@ -3,6 +3,7 @@ import Config
 config :request_cache_plug,
   enabled?: true,
   verbose?: false,
+  cached_errors: [],
   graphql_paths: ["/graphiql", "/graphql"],
   conn_priv_key: :__shared_request_cache__,
   request_cache_module: RequestCache.ConCacheStore,

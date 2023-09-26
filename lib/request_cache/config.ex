@@ -15,6 +15,10 @@ defmodule RequestCache.Config do
     Application.get_env(@app, :conn_priv_key) || :__shared_request_cache__
   end
 
+  def cached_errors do
+    Application.get_env(@app, :cached_errors) || []
+  end
+
   def request_cache_module do
     Application.get_env(@app, :request_cache_module) || RequestCache.ConCacheStore
   end

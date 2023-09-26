@@ -16,8 +16,6 @@ defmodule RequestCache.Plug do
   # This is compile time so we can check quicker
   @graphql_paths RequestCache.Config.graphql_paths()
   @request_cache_header "rc-cache-status"
-  @json_regex ~r/^(\[|\{)(.*|\n)*(\]|\})$/
-  @html_regex ~r/<!DOCTYPE\s+html>/i
 
   def request_cache_header, do: @request_cache_header
 
@@ -36,13 +34,20 @@ defmodule RequestCache.Plug do
     end
   end
 
-  defp call_for_api_type(%Plug.Conn{request_path: path, method: "GET", query_string: query_string} = conn, opts) when path in @graphql_paths do
+  defp call_for_api_type(%Plug.Conn{
+    request_path: path,
+    method: "GET",
+    query_string: query_string
+  } = conn, opts) when path in @graphql_paths do
     Util.verbose_log("[RequestCache.Plug] GraphQL query detected")
 
     maybe_return_cached_result(conn, opts, path, query_string)
   end
 
-  defp call_for_api_type(%Plug.Conn{request_path: path, method: "GET"} = conn, opts) when path not in @graphql_paths do
+  defp call_for_api_type(%Plug.Conn{
+    request_path: path,
+    method: "GET"
+  } = conn, opts) when path not in @graphql_paths do
     Util.verbose_log("[RequestCache.Plug] REST path detected")
 
     cache_key = rest_cache_key(conn)
@@ -108,8 +113,8 @@ defmodule RequestCache.Plug do
       [_ | _] -> conn
       [] ->
         cond do
-          result =~ @json_regex -> Plug.Conn.put_resp_content_type(conn, "application/json")
-          result =~ @html_regex -> Plug.Conn.put_resp_content_type(conn, "text/html")
+          String.starts_with?(result, ["{", "["]) -> Plug.Conn.put_resp_content_type(conn, "application/json")
+          String.starts_with?(result, ["<"]) -> Plug.Conn.put_resp_content_type(conn, "text/html")
 
           true -> conn
         end
@@ -126,7 +131,7 @@ defmodule RequestCache.Plug do
         Util.verbose_log("[RequestCache.Plug] Cache enabled before send, setting into cache...")
         ttl = request_cache_ttl(new_conn, opts)
 
-        with :ok <- request_cache_module(new_conn, opts).put(cache_key, ttl, new_conn.resp_body) do
+        with :ok <- request_cache_module(new_conn, opts).put(cache_key, ttl, to_string(new_conn.resp_body)) do
           Metrics.inc_cache_put(event_metadata(conn, cache_key, opts))
 
           Util.verbose_log("[RequestCache.Plug] Successfully put #{cache_key} into cache\n#{new_conn.resp_body}")
@@ -162,12 +167,13 @@ defmodule RequestCache.Plug do
     conn_request(conn)[:labels]
   end
 
-  defp enabled_for_request?(%Plug.Conn{private: private}) do
-    plug_present? = get_in(private, [conn_private_key(), :enabled?]) ||
-                    get_in(private, [:absinthe, :context, conn_private_key(), :enabled?])
+  defp request_cache_cached_errors(conn) do
+    conn_request(conn)[:cached_errors] || RequestCache.Config.cached_errors()
+  end
 
-    marked_for_cache? = get_in(private, [conn_private_key(), :cache_request?]) ||
-                        get_in(private, [:absinthe, :context, conn_private_key(), :cache_request?])
+  defp enabled_for_request?(%Plug.Conn{} = conn) do
+    plug_present? = !!conn_private_key_item(conn, :enabled?)
+    marked_for_cache? = !!conn_private_key_item(conn, :cache_request?)
 
     if plug_present? do
       Util.verbose_log("[RequestCache.Plug] Plug enabled for request")
@@ -177,13 +183,53 @@ defmodule RequestCache.Plug do
       Util.verbose_log("[RequestCache.Plug] Plug has been marked for cache")
     end
 
-    plug_present? && marked_for_cache?
+    plug_present? && marked_for_cache? && response_error_and_cached?(conn)
   end
 
-  defp conn_request(%Plug.Conn{private: private}) do
-    get_in(private, [conn_private_key(), :request])
-    || get_in(private, [:absinthe, :context, conn_private_key(), :request])
-    || []
+  defp response_error_and_cached?(%Plug.Conn{status: 200, request_path: path}) when path not in @graphql_paths do
+    true
+  end
+
+  defp response_error_and_cached?(%Plug.Conn{status: 200, request_path: path} = conn) when path in @graphql_paths do
+    empty_errors? = String.contains?(conn.resp_body, empty_errors_pattern())
+    no_errors? = !String.contains?(conn.resp_body, error_pattern())
+
+    empty_errors? or
+    no_errors? or
+    gql_resp_has_known_error?(request_cache_cached_errors(conn), conn.resp_body)
+  end
+
+  defp response_error_and_cached?(%Plug.Conn{status: status} = conn) do
+    cached_error_codes = request_cache_cached_errors(conn)
+
+    cached_error_codes !== [] and
+    (cached_error_codes === :all or Plug.Conn.Status.reason_atom(status) in cached_error_codes)
+  end
+
+  defp gql_resp_has_known_error?([], _resp_body), do: false
+  defp gql_resp_has_known_error?(:all, _resp_body), do: true
+
+  defp gql_resp_has_known_error?(cached_errors, resp_body) do
+    String.contains?(resp_body, error_codes_pattern(cached_errors))
+  end
+
+  def empty_errors_pattern, do: :binary.compile_pattern("\"errors\": []")
+  def error_pattern, do: :binary.compile_pattern("\"errors\":")
+
+  def error_codes_pattern(cached_errors) do
+    cached_errors
+      |> Enum.flat_map(&["code\":\"#{&1}", "code\" :\"#{&1}", "code\": \"#{&1}", "code\" : \"#{&1}"])
+      |> :binary.compile_pattern
+  end
+
+
+  defp conn_request(%Plug.Conn{} = conn) do
+    conn_private_key_item(conn, :request) || []
+  end
+
+  defp conn_private_key_item(%Plug.Conn{private: private}, name) do
+    get_in(private, [conn_private_key(), name])
+    || get_in(private, [:absinthe, :context, conn_private_key(), name])
   end
 
   if RequestCache.Application.dependency_found?(:absinthe_plug) do
@@ -191,12 +237,14 @@ defmodule RequestCache.Plug do
       context = conn.private[:absinthe][:context] || %{}
 
       conn
-        |> Plug.Conn.put_private(conn_private_key(), enabled?: true)
-        |> Absinthe.Plug.put_options(context: Map.put(context, conn_private_key(), enabled?: true))
+        |> deep_merge_to_private(enabled?: true)
+        |> Absinthe.Plug.put_options(
+          context: Util.deep_merge(context, %{conn_private_key() => [enabled?: true]})
+        )
     end
   else
     defp enable_request_cache_for_conn(conn) do
-      Plug.Conn.put_private(conn, conn_private_key(), enabled?: true)
+      deep_merge_to_private(conn, enabled?: true)
     end
   end
 
@@ -204,7 +252,7 @@ defmodule RequestCache.Plug do
     if conn.private[conn_private_key()][:enabled?] do
       Util.verbose_log("[RequestCache.Plug] Storing REST request in #{conn_private_key()}")
 
-      Plug.Conn.put_private(conn, conn_private_key(),
+      deep_merge_to_private(conn,
         cache_request?: true,
         request: opts
       )
@@ -221,6 +269,12 @@ defmodule RequestCache.Plug do
 
   defp conn_private_key do
     RequestCache.Config.conn_private_key()
+  end
+
+  defp deep_merge_to_private(conn, params) do
+    (conn.private[conn_private_key()] || [])
+      |> Util.deep_merge(params)
+      |> then(&Plug.Conn.put_private(conn, conn_private_key(), &1))
   end
 
   defp log_error(error, conn, opts) do
