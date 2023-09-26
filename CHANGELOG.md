@@ -1,3 +1,6 @@
+# 1.0.0
+- turn off caching errors by default, you must tune errors to `:all` to retain prior behaviour
+
 # 0.4.0
 - add whitelist for specific query names for caching instead of caching all, default all still cached
 - add ability to tune caching errors, default all still cached
