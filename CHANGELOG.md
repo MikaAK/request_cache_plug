@@ -1,3 +1,6 @@
+# 1.0.1
+- Disable middleware when enabled? false in global config
+
 # 1.0.0
 - turn off caching errors by default, you must tune errors to `:all` to retain prior behaviour
 
