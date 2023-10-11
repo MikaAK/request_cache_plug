@@ -10,12 +10,20 @@ if absinthe_loaded? do
     def call(%Absinthe.Resolution{} = resolution, opts) when is_list(opts) do
       opts = ensure_valid_ttl(opts)
 
-      enable_cache_for_resolution(resolution, opts)
+      if RequestCache.Config.enabled?() do
+        enable_cache_for_resolution(resolution, opts)
+      else
+        resolution
+      end
     end
 
     @impl Absinthe.Middleware
     def call(%Absinthe.Resolution{} = resolution, ttl) when is_integer(ttl) do
-      enable_cache_for_resolution(resolution, ttl: ttl)
+      if RequestCache.Config.enabled?() do
+        enable_cache_for_resolution(resolution, ttl: ttl)
+      else
+        resolution
+      end
     end
 
     defp ensure_valid_ttl(opts) do
