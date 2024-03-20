@@ -5,7 +5,9 @@ cond do
       @default_name RequestCache.Config.default_concache_opts()[:name]
 
       def start_link(opts \\ []) do
-        opts = Keyword.merge(RequestCache.Config.default_concache_opts(), opts)
+        opts = RequestCache.Config.default_concache_opts()
+          |> Keyword.merge(opts)
+          |> Keyword.put_new(:global_ttl, :timer.hours(1))
 
         ConCache.start_link(opts)
       end
