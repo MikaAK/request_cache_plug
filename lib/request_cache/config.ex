@@ -31,13 +31,22 @@ defmodule RequestCache.Config do
     !!Application.get_env(@app, :enabled?, true)
   end
 
+  def allowed_graphql_methods do
+    Application.get_env(@app, :allowed_graphql_methods, ["GET"])
+  end
+
+  def allowed_rest_methods do
+    Application.get_env(@app, :allowed_rest_methods, ["GET"])
+  end
+
   def default_concache_opts do
-    Application.get_env(@app, :default_concache_opts) || [
-      name: :con_cache_request_cache_store,
+    opts = Application.get_env(@app, :default_concache_opts) || [
       global_ttl: default_ttl(),
       acquire_lock_timeout: :timer.seconds(1),
       ttl_check_interval: :timer.seconds(1),
       ets_options: [write_concurrency: true, read_concurrency: true]
     ]
+
+    Keyword.put_new(opts, :name, :con_cache_request_cache_store)
   end
 end
