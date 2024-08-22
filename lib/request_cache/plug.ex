@@ -285,6 +285,7 @@ defmodule RequestCache.Plug do
 
     Logger.error(
       "[RequestCache.Plug] recieved an error from #{inspect(request_cache_module(conn, opts))}",
+      # credo:disable-for-next-line
       [crash_reason: {error, stacktrace}]
     )
   end
