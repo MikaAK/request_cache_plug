@@ -6,22 +6,26 @@ jobs:
   Build:
     runs-on: ubuntu-latest
 
-    container:
-      image: mikaak/elixir:1.13-alpine
-      env:
-        MIX_ENV: test
+    env:
+      MIX_ENV: test
 
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v4
 
       - name: Cache Deps & Build
-        uses: actions/cache@v2
+        uses: actions/cache@v4
         with:
           key: ${{github.ref}}-deps-build-cache-${{hashFiles('./mix.lock')}}
           path: |
             /github/home/.mix
             ./deps
             ./_build
+
+      - name: Set up Elixir
+        uses: erlef/setup-beam@v1
+        with:
+          elixir-version: '1.14.1' # Define the elixir version [required]
+          otp-version: '25.1.2' # Define the OTP version [required]
 
       - name: Install Rebar & Hex
         run: mix local.hex --force --if-missing && mix local.rebar --force --if-missing
@@ -37,16 +41,14 @@ jobs:
 
     needs: [Build]
 
-    container:
-      image: mikaak/elixir:1.13-alpine
-      env:
-        MIX_ENV: test
+    env:
+      MIX_ENV: test
 
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v4
 
       - name: Cache Deps & Build
-        uses: actions/cache@v2
+        uses: actions/cache@v4
         with:
           key: ${{github.ref}}-deps-build-cache-${{hashFiles('./mix.lock')}}
           path: |
@@ -54,8 +56,11 @@ jobs:
             ./deps
             ./_build
 
-      - name: Install Rebar & Hex
-        run: mix local.hex --force --if-missing && mix local.rebar --force --if-missing
+      - name: Set up Elixir
+        uses: erlef/setup-beam@v1
+        with:
+          elixir-version: '1.14.1' # Define the elixir version [required]
+          otp-version: '25.1.2' # Define the OTP version [required]
 
       - name: Install Dependencies
         run: mix deps.get
@@ -68,16 +73,11 @@ jobs:
 
     needs: [Build]
 
-    container:
-      image: mikaak/elixir:1.13-alpine
-      env:
-        MIX_ENV: test
-
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v4
 
       - name: Cache Deps & Build
-        uses: actions/cache@v2
+        uses: actions/cache@v4
         with:
           key: ${{github.ref}}-deps-build-cache-${{hashFiles('./mix.lock')}}
           path: |
@@ -85,8 +85,11 @@ jobs:
             ./deps
             ./_build
 
-      - name: Install Rebar & Hex
-        run: mix local.hex --force --if-missing && mix local.rebar --force --if-missing
+      - name: Set up Elixir
+        uses: erlef/setup-beam@v1
+        with:
+          elixir-version: '1.14.1' # Define the elixir version [required]
+          otp-version: '25.1.2' # Define the OTP version [required]
 
       - name: Install Dependencies
         run: mix deps.get
@@ -99,16 +102,11 @@ jobs:
 
     needs: [Build]
 
-    container:
-      image: mikaak/elixir:1.13-alpine
-      env:
-        MIX_ENV: test
-
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v4
 
       - name: Cache Deps & Build
-        uses: actions/cache@v2
+        uses: actions/cache@v4
         with:
           key: ${{github.ref}}-deps-build-cache-${{hashFiles('./mix.lock')}}
           path: |
@@ -116,8 +114,11 @@ jobs:
             ./deps
             ./_build
 
-      - name: Install Rebar & Hex
-        run: mix local.hex --force --if-missing && mix local.rebar --force --if-missing
+      - name: Set up Elixir
+        uses: erlef/setup-beam@v1
+        with:
+          elixir-version: '1.14.1' # Define the elixir version [required]
+          otp-version: '25.1.2' # Define the OTP version [required]
 
       - name: Install Dependencies
         run: mix deps.get
@@ -126,4 +127,4 @@ jobs:
         run: mix coveralls.json && bash <(curl -s https://codecov.io/bash)
 
       - name: Upload to codecov.io
-        uses: codecov/codecov-action@v1
+        uses: codecov/codecov-action@v4
