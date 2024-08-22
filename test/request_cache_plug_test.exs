@@ -190,6 +190,7 @@ defmodule RequestCachePlugTest do
     assert resp_headers === [
       {"cache-control", "max-age=0, private, must-revalidate"},
       {"rc-cache-status", "HIT"},
+      {"rc-cache-key", "/my_route/html:D41D8CD98F00B204E9800998ECF8427E"},
       {"content-type", "application/json; charset=utf-8"}
     ]
   end
@@ -219,7 +220,8 @@ defmodule RequestCachePlugTest do
     assert resp_headers === [
       {"cache-control", "max-age=0, private, must-revalidate"},
       {"content-type", "text/html; charset=utf-8"},
-      {"rc-cache-status", "HIT"}
+      {"rc-cache-status", "HIT"},
+      {"rc-cache-key", "/my_route/cache:D41D8CD98F00B204E9800998ECF8427E"}
     ]
   end
 
@@ -271,7 +273,7 @@ defmodule RequestCachePlugTest do
       {"cache-control", "max-age=0, private, must-revalidate"},
       {"content-type", "text/html; charset=utf-8"},
       {"rc-cache-status", "HIT"},
-      {"rc-cache-key", "/my_route/cache:D41D8CD98F00B204E9800998ECF8427E"}
+      {"rc-cache-key", "/error-route/caching-errors-enabled:D41D8CD98F00B204E9800998ECF8427E"}
     ]
   end
 
