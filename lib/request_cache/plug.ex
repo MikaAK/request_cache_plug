@@ -16,6 +16,7 @@ defmodule RequestCache.Plug do
   # This is compile time so we can check quicker
   @graphql_paths RequestCache.Config.graphql_paths()
   @request_cache_header "rc-cache-status"
+  @request_cache_key_header "rc-cache-key"
 
   def request_cache_header, do: @request_cache_header
   def request_cache_key_header, do: @request_cache_key_header
