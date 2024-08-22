@@ -18,6 +18,7 @@ defmodule RequestCache.Plug do
   @request_cache_header "rc-cache-status"
 
   def request_cache_header, do: @request_cache_header
+  def request_cache_key_header, do: @request_cache_key_header
 
   @impl Plug
   def init(opts), do: opts
@@ -65,7 +66,7 @@ defmodule RequestCache.Plug do
         Metrics.inc_rest_cache_hit(%{cache_key: cache_key})
         Util.verbose_log("[RequestCache.Plug] Returning cached result for #{cache_key}")
 
-        halt_and_return_result(conn, cached_result)
+        halt_and_return_result(conn, cache_key, cached_result)
 
       {:error, e} ->
         log_error(e, conn, opts)
@@ -91,7 +92,7 @@ defmodule RequestCache.Plug do
         Metrics.inc_graphql_cache_hit(event_metadata(conn, cache_key, opts))
         Util.verbose_log("[RequestCache.Plug] Returning cached result for #{cache_key}")
 
-        halt_and_return_result(conn, cached_result)
+        halt_and_return_result(conn, cache_key, cached_result)
 
       {:error, e} ->
         log_error(e, conn, opts)
@@ -100,10 +101,11 @@ defmodule RequestCache.Plug do
     end
   end
 
-  defp halt_and_return_result(conn, result) do
+  defp halt_and_return_result(conn, cache_key, result) do
     conn
     |> Plug.Conn.halt()
     |> Plug.Conn.put_resp_header(@request_cache_header, "HIT")
+    |> Plug.Conn.put_resp_header(@request_cache_key_header, cache_key)
     |> maybe_put_content_type(result)
     |> Plug.Conn.send_resp(200, result)
   end
