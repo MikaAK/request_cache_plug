@@ -1,3 +1,6 @@
+# 1.0.2
+- Add rc-cache-key header so you can invalidate specific cache items
+
 # 1.0.1
 - Disable middleware when enabled? false in global config
 

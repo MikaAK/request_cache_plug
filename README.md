@@ -213,7 +213,8 @@ Take a look at [error_message](https://github.com/MikaAK/elixir_error_message) f
 
 ### Caching Header
 When an item is served from the cache, we return a header `rc-cache-status` which has a value of `HIT`. Using this you can tell if the item was
-served out of cache, without it the item was fetched
+served out of cache, without it the item was fetched.
+We can also invalidate specific items out of the cache, by using the `rc-cache-key` header which returns the key being used for the cache
 
 ### Example Reduction
 In the case of a large (16mb) payload running through absinthe, this plug cuts down response times from 400+ms -> <400μs
