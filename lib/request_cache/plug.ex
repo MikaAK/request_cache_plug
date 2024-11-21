@@ -15,6 +15,8 @@ defmodule RequestCache.Plug do
 
   # This is compile time so we can check quicker
   @graphql_paths RequestCache.Config.graphql_paths()
+  @allowed_graphql_methods RequestCache.Config.allowed_graphql_methods()
+  @allowed_rest_methods RequestCache.Config.allowed_rest_methods()
   @request_cache_header "rc-cache-status"
   @request_cache_key_header "rc-cache-key"
 
@@ -28,6 +30,7 @@ defmodule RequestCache.Plug do
   def call(conn, opts) do
     if RequestCache.Config.enabled?() do
       Util.verbose_log("[RequestCache.Plug] Hit request cache while enabled")
+
       call_for_api_type(conn, opts)
     else
       Util.verbose_log("[RequestCache.Plug] Hit request cache while disabled")
@@ -38,9 +41,9 @@ defmodule RequestCache.Plug do
 
   defp call_for_api_type(%Plug.Conn{
     request_path: path,
-    method: "GET",
+    method: method,
     query_string: query_string
-  } = conn, opts) when path in @graphql_paths do
+  } = conn, opts) when path in @graphql_paths and method in @allowed_graphql_methods do
     Util.verbose_log("[RequestCache.Plug] GraphQL query detected")
 
     maybe_return_cached_result(conn, opts, path, query_string)
@@ -48,8 +51,8 @@ defmodule RequestCache.Plug do
 
   defp call_for_api_type(%Plug.Conn{
     request_path: path,
-    method: "GET"
-  } = conn, opts) when path not in @graphql_paths do
+    method: method
+  } = conn, opts) when path not in @graphql_paths and method in @allowed_rest_methods do
     Util.verbose_log("[RequestCache.Plug] REST path detected")
 
     cache_key = rest_cache_key(conn)
